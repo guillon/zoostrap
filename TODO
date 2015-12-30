@@ -1,0 +1,11 @@
+TODO list for zoostrap:
+- add fetch of kains static binary
+- add unitary tests for all distros
+- fix issue when removing dirs (device or resource busy), maybe move to trash
+dir first or find out why kains leaves busy resources behind
+- add -m/--machine option
+- add the -d/--distro option
+- optionally port to python 2.6/2.7/3.x
+- add options for packages lists and obsolete environment
+- add optional configuration file for list of packages and/or executed commands
+

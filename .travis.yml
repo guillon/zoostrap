@@ -1,0 +1,11 @@
+sudo: required
+script:
+  - make check
+deploy:
+  provider: releases
+  api_key:
+    secure: MdjRWytz8oTyejhzx10mL+D4JP4jZy+E4RoMWU6Zr/BA9KzxRn4n5AHLYCyzshwqshmwAjCHJ3njnHmNgENRyu1X3ejT3jc2UKevY0uf8OpnjN5WjHBlUwk6+RECgBOe1O/TMIhNHmvdVMDDDW8lZQ2d8NuOm9jgtCtIxIXS1KFBYc+ADI6jCmzTqdQ3ikCvVI9Wo7YHyBKzAYNoMtK350N2ZOP2UUIj6pIoW6rBsslnSVv7S9RbtUzbs8mmQEO3f03NvYTK6s00CBwBgF24hNlhFr8enX8yzhziZB9CpbiMtZa4ojyA0TlbK7uVrV7czaaceWLhuxka42r/CdJNtvya7A+oTfeKVVoWwkUyb+bziyo0eVFrnZIQ5UP2avledw1XlmaHUDBMp+QTvA68sLbcunURyIVuhTJy4lkkrf02BUOpqdVk3BpPlnOqzWrRWIfdWW37N/jkAc4RWdjmzdEfSz3yV0JF21FEzDXGMgz8z6eORKKA6Dd+2829+1SHpstXhJ2q1ZYbJjYz17Dz5bsKNL6SvauNf3EMDy8pvAgkIJ7hjwqDPBVffODPubQ02H1KRcpHXvAci70KwR1blDO9ct8JK+/u+1nbMjyI9/p8Bz8BMI0GSmXKCluuOMK9m7vpq+PpQ4pspZM2TX1akgSSMcQnRaZh5tVYH5B2qDs=
+  file: zoostrap
+  on:
+    repo: guillon/zoostrap
+    tags: true

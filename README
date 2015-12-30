@@ -1,0 +1,83 @@
+
+[![Build Status](https://api.travis-ci.org/guillon/zoostrap.png?branch=master)](https://travis-ci.org/guillon/zoostrap/branches)
+
+# Synopsys
+
+The zoostrap utility is a simple tool for bootstraping a Linux host
+distribution into a ckains container, installing packages and running
+commands in the container. Refer to ckains for details on the actual
+container tool used by default.
+
+The list of supported distributions is currently:
+- Ubuntu 12.04
+- Ubuntu 14.04
+- CentOS 7
+
+This tool is still a prototype and as of now configuration is passed through
+the environment, refer to the TODO file for next steps.
+
+# Download
+
+Download the last stable version from there:
+https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+
+# Examples
+
+A typical usage is to bootstrap for instance a CentOS 7 distribution and then
+execute a build command into the installed distribution root tree.
+
+For instance, download zoostrap and ckains and execute:
+
+    $ env ZS_DISTRIB_ID=Ubuntu ZS_DISTRIB_RELEASE=12.04 \
+      ZS_DISTRIB_PACKAGES="wget" KAINS_EXE=./ckains \
+      ./zoostrap rootfs
+    $ ./ckains -R rootfs -- wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+    ...
+
+The first command installs a Ubuntu 12.04 core root tree in the rootfs/
+directory and install the wget package.
+
+# Build and Install
+
+This script requires bash, curl and a container execution tool such as ckains;
+kains or proot.
+
+The script can be used directly without installation.
+
+A makefile is provided for completion and testing purpose.
+
+Build with:
+
+    $ make all # a no-op actually
+
+Run unittests with:
+
+    $ make check
+
+Install with, for instance:
+
+    $ make install PREFIX=$HOME/local  # Default is PREFIX=/usr/local
+
+
+# References
+
+Refer to the project home page at:
+http://guillon.github.io/zoostrap
+
+Refer to the current build and validation status at:
+https://travis-ci.org/guillon/zoostrap?branches
+
+Fill issues and enhancement request at:
+https://github.com/guillon/zoostrap/issues
+
+Refer to the TODO file for future work:
+https://github.com/guillon/zoostrap/blob/master/TODO
+
+Refer to ckains at: https://github.com/mickael-guene/ckains
+
+Refer to proot at: http://proot.me
+
+# License
+
+Refer to the COPYING file: https://github.com/guillon/zoostrap/blob/master/COPYING
+Refer to the COPYRIGHT file: https://github.com/guillon/zoostrap/blob/master/COPYRIGHT

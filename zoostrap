@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+set -eu
+set -o pipefail
+
+basename=$(basename "$0")
+dirname=$(readlink -e "$(dirname "$0")")
+
+ZS_DISTRIB_ID="${ZS_DISTRIB_ID:-Ubuntu}"
+ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
+ZS_DISTRIB_PACKAGES="${ZS_DISTRIB_PACKAGES:-}"
+ZS_DISTRIB_URL="${ZS_DISTRIB_URL:-}"
+ZS_NO_UPDATE="${ZS_NO_UPDATE:-}"
+ZS_NO_UPGRADE="${ZS_NO_UPGRADE:-}"
+CURL="${CURL:-curl -LksS --retry 3}"
+KAINS_EXE="${KAINS_EXE:-kains}"
+KAINS_PATH="$(readlink -e "$(type -p "$KAINS_EXE")" || true)"
+DST_DIR="${1:-}"
+
+BARE_PATH="/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
+SANDBOX_S="env PATH=$BARE_PATH $KAINS_PATH -S $DST_DIR -w / --"
+SANDBOX_U="$KAINS_PATH -R $DST_DIR -w /"
+
+function error() { echo "$basename: error: $1" >&2; exit 1; }
+function info() { echo "$basename: info: $1"; }
+function cleanup() { local code=$?; trap - INT TERM QUIT EXIT; [ ! -d "${tmpdir:-}" ] || rm -rf "$tmpdir"; exit $code; }
+trap cleanup INT TERM QUIT EXIT
+
+ZS_DISTRIB_URLS=""
+case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
+  Ubuntu-12.04) \
+    ZS_DISTRIB_URLS="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-amd64.tar.gz"
+    ;;
+  Ubuntu-14.04) \
+    ZS_DISTRIB_URLS="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.2-core-amd64.tar.gz"
+    ;;
+  centos-7) \
+    ZS_DISTRIB_URLS="http://download.openvz.org/template/precreated/centos-7-x86_64-minimal.tar.gz"
+    ;;
+esac
+case "${ZS_DISTRIB_ID}" in
+  Ubuntu) \
+    ZS_DISTRIB_UPDATE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list && apt-get update -qqy"
+    ZS_DISTRIB_UPGRADE="apt-get upgrade -qqy"
+    ZS_DISTRIB_INSTALL="apt-get install -qqy"
+    ;;
+  centos) \
+    ZS_DISTRIB_UPDATE="rm -f /etc/yum.repos.d/vz.repo"
+    ZS_DISTRIB_UPGRADE="yum update -y"
+    ZS_DISTRIB_INSTALL="yum install -y"
+    ;;
+esac
+
+[ -n "$ZS_DISTRIB_URLS" ] || ZS_DISTRIB_URLS="$ZS_DISTRIB_URL"
+[ -n "$ZS_DISTRIB_URLS" ] || error "no default URLs list for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE"
+
+[ -n "$KAINS_PATH" ] || error "kains not found in PATH and not specified in KAINS_EXE"
+
+[ -n "$DST_DIR" ] || error "missing dst_dir argument"
+shift
+
+tmpdir=$(mktemp -d)
+info "Downloading distro archive for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE..."
+for distro_url in $ZS_DISTRIB_URLS; do
+  info "Downloading $distro_url..."
+  $CURL -o "$tmpdir"/distro.tgz "$distro_url" && break
+done
+
+
+info "Cleaning $DST_DIR..."
+chmod -R +rwX "$DST_DIR" 2>/dev/null || true
+rm -rf "$DST_DIR"
+info "Extracting $distro_url in $DST_DIR..."
+mkdir -p "$DST_DIR"
+tar xzf "$tmpdir"/distro.tgz -C "$DST_DIR" 2>/dev/null || true
+
+info "Updating distro..."
+if [ "$ZS_NO_UPDATE" != 1 ]; then
+  $SANDBOX_S sh -c "$ZS_DISTRIB_UPDATE" || true
+else
+  info "Skipped (ZS_NO_UPDATE=$ZS_NO_UPDATE)."
+fi
+
+info "Upgrading distro..."
+if [ "$ZS_NO_UPGRADE" != 1 ]; then
+  $SANDBOX_S sh -c "$ZS_DISTRIB_UPGRADE" || true
+else
+  info "Skipped (ZS_NO_UPGRADE=$ZS_NO_UPGRADE)."
+fi
+
+info "Installing packages..."
+if [ -n "$ZS_DISTRIB_PACKAGES" ]; then
+  info "Requested packages: $ZS_DISTRIB_PACKAGES..."
+  $SANDBOX_S sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || true
+else
+  info "Skipped, no package requested (ZS_DISTRIB_PACKAGES=$ZS_DISTRIB_PACKAGES)."
+fi
+
+if [ "${1+1}" = 1 ]; then
+  info "Executing command:" ${1+"$@"}
+  $SANDBOX_U ${1+"$@"}
+fi
+
