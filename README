@@ -18,24 +18,39 @@ the environment, refer to the TODO file for next steps.
 
 # Download
 
-Download the last stable version from there:
+Download a specific release from the release page:
+https://github.com/guillon/zoostrap/releases
+
+Or download the last stable version from there:
 https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+
+For instance:
+
+    $ wget -O ~/bin/zoostrap https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+    $ chmod +x ~/bin/zoostrap
+
+The first command gets the zoostrap tool and the second command sets execution bit.
 
 # Examples
 
 A typical usage is to bootstrap for instance a CentOS 7 distribution and then
 execute a build command into the installed distribution root tree.
 
-For instance, download zoostrap and ckains and execute:
+For instance, assuming ckains and zoostrap are available in the path:
 
     $ env ZS_DISTRIB_ID=Ubuntu ZS_DISTRIB_RELEASE=12.04 \
-      ZS_DISTRIB_PACKAGES="wget" KAINS_EXE=./ckains \
-      ./zoostrap rootfs
-    $ ./ckains -R rootfs -- wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+      ZS_DISTRIB_PACKAGES="wget" KAINS_EXE=ckains \
+      zoostrap rootfs
+    $ ckains -R rootfs -- wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
     ...
 
 The first command installs a Ubuntu 12.04 core root tree in the rootfs/
 directory and install the wget package.
+
+The second command executes a wget command in the just installed distro.
+
+Note: as of now, zoostrap does not install ckains itself, hence it must be
+installed first. This should be fixed in the future.
 
 # Build and Install
 
