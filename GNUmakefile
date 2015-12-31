@@ -1,5 +1,5 @@
 #
-# Copyright (c) STMicroelectronics 2012
+# Copyright (c) STMicroelectronics 2015
 #
 # This file is part of zoostrap.
 #
