@@ -5,98 +5,132 @@ set -o pipefail
 basename=$(basename "$0")
 dirname=$(readlink -e "$(dirname "$0")")
 
-ZS_DISTRIB_ID="${ZS_DISTRIB_ID:-Ubuntu}"
+ZS_DISTRIB_ID="${ZS_DISTRIB_ID:-ubuntu}"
 ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
 ZS_DISTRIB_PACKAGES="${ZS_DISTRIB_PACKAGES:-}"
-ZS_DISTRIB_URL="${ZS_DISTRIB_URL:-}"
-ZS_NO_UPDATE="${ZS_NO_UPDATE:-}"
-ZS_NO_UPGRADE="${ZS_NO_UPGRADE:-}"
-CURL="${CURL:-curl -LksS --retry 3}"
-KAINS_EXE="${KAINS_EXE:-kains}"
-KAINS_PATH="$(readlink -e "$(type -p "$KAINS_EXE")" || true)"
+ZS_UPDATE="${ZS_UPDATE:-true}"
+ZS_UPGRADE="${ZS_UPGRADE:-false}"
+WGET="${WGET:-wget --no-check-certificate --tries 3 --quiet}"
 DST_DIR="${1:-}"
 
-BARE_PATH="/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
-SANDBOX_S="env PATH=$BARE_PATH $KAINS_PATH -S $DST_DIR -w / --"
-SANDBOX_U="$KAINS_PATH -R $DST_DIR -w /"
+ZS_CKAINS_URL="https://github.com/mickael-guene/ckains/releases/download/v1.0.1/ckains.x86_64"
+ZS_CKAINS_SHA1SUM=603abe3b505770181e5f61a709ff27cf6c0aea8c
 
 function error() { echo "$basename: error: $1" >&2; exit 1; }
+function warning() { echo "$basename: warning: $1" >&2; }
 function info() { echo "$basename: info: $1"; }
 function cleanup() { local code=$?; trap - INT TERM QUIT EXIT; [ ! -d "${tmpdir:-}" ] || rm -rf "$tmpdir"; exit $code; }
 trap cleanup INT TERM QUIT EXIT
 
-ZS_DISTRIB_URLS=""
+ZS_DISTRIB_URL=""
 case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
-  Ubuntu-12.04) \
-    ZS_DISTRIB_URLS="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-amd64.tar.gz"
+  ubuntu-12.04) \
+    ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-amd64.tar.gz"
+    ZS_DISTRIB_SHA1SUM="10e690309ebeb2ab06d8faf40b0c08c0723c7639"
     ;;
-  Ubuntu-14.04) \
-    ZS_DISTRIB_URLS="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.2-core-amd64.tar.gz"
+  ubuntu-14.04) \
+    ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.2-core-amd64.tar.gz"
+    ZS_DISTRIB_SHA1SUM="0993465651afdf4e2ea18af6d0b3233080f8d6f2"
+    ;;
+  centos-6) \
+    ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-6-x86_64-minimal.tar.gz"
+    ZS_DISTRIB_SHA1SUM="47b773ca9d5b7fc33a7e7e2d711f14b3564a4db9"
     ;;
   centos-7) \
-    ZS_DISTRIB_URLS="http://download.openvz.org/template/precreated/centos-7-x86_64-minimal.tar.gz"
+    ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-7-x86_64-minimal.tar.gz"
+    ZS_DISTRIB_SHA1SUM="4277ccd7d363a97593fcd74614be43ad9aca6cac"
     ;;
 esac
 case "${ZS_DISTRIB_ID}" in
-  Ubuntu) \
+  ubuntu) \
     ZS_DISTRIB_UPDATE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list && apt-get update -qqy"
     ZS_DISTRIB_UPGRADE="apt-get upgrade -qqy"
     ZS_DISTRIB_INSTALL="apt-get install -qqy"
     ;;
   centos) \
-    ZS_DISTRIB_UPDATE="rm -f /etc/yum.repos.d/vz.repo"
-    ZS_DISTRIB_UPGRADE="yum update -y"
+    ZS_DISTRIB_UPDATE="rm -f /etc/yum.repos.d/vz.repo && yum update -y"
+    ZS_DISTRIB_UPGRADE="true"
     ZS_DISTRIB_INSTALL="yum install -y"
     ;;
 esac
 
-[ -n "$ZS_DISTRIB_URLS" ] || ZS_DISTRIB_URLS="$ZS_DISTRIB_URL"
-[ -n "$ZS_DISTRIB_URLS" ] || error "no default URLs list for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE"
-
-[ -n "$KAINS_PATH" ] || error "kains not found in PATH and not specified in KAINS_EXE"
-
+[ -n "$ZS_DISTRIB_URL" ] || error "no default URL for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE"
 [ -n "$DST_DIR" ] || error "missing dst_dir argument"
 shift
 
 tmpdir=$(mktemp -d)
-info "Downloading distro archive for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE..."
-for distro_url in $ZS_DISTRIB_URLS; do
-  info "Downloading $distro_url..."
-  $CURL -o "$tmpdir"/distro.tgz "$distro_url" && break
-done
+
+info "Downloading ckains from $ZS_CKAINS_URL..."
+$WGET -O "$tmpdir"/ckains "$ZS_CKAINS_URL" || error "failed to download ckains tool from $ZS_CKAINS_URL"
+echo "$ZS_CKAINS_SHA1SUM  $tmpdir/ckains" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_CKAINS_URL, expecting: $ZS_CKAINS_SHA1SUM"
+
+info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
+$WGET -O "$tmpdir"/distro.tgz "$ZS_DISTRIB_URL" || error "failed to download image from $ZS_DISTRIB_URL"
+echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/distro.tgz" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
 
 
-info "Cleaning $DST_DIR..."
-chmod -R +rwX "$DST_DIR" 2>/dev/null || true
-rm -rf "$DST_DIR"
-info "Extracting $distro_url in $DST_DIR..."
+if [ -d "$DST_DIR" ]; then
+    info "Trashing former $DST_DIR..."
+    dst_dir_dirname="$(dirname "$(readlink -e "$DST_DIR")")"
+    trash_tmpdir="$(mktemp -d -p "$dst_dir_dirname" trash.zoostrap.XXXXXX)"
+    chmod u+rwx "$DST_DIR"
+    mv "$DST_DIR" "$trash_tmpdir"
+fi
+
+info "Creating $DST_DIR..."
 mkdir -p "$DST_DIR"
+dst_dir_dirname="$(dirname "$(readlink -e "$DST_DIR")")"
+
+info "Cleaning trash dirs..."
+chmod -R +rwX "$dst_dir_dirname"/trash.zoostrap.* 2>/dev/null || true
+rm -rf "$dst_dir_dirname"/trash.zoostrap.* || warning "could not remove completly trash dirs when running: rm -rf $dst_dir_dirname/trash.zoostrap.*"
+
+info "Extracting $ZS_DISTRIB_URL in $DST_DIR..."
 tar xzf "$tmpdir"/distro.tgz -C "$DST_DIR" 2>/dev/null || true
+chmod u+rwx "$DST_DIR"
+
+mkdir -p "$DST_DIR"/.zoostrap
+mv "$tmpdir"/ckains "$DST_DIR"/.zoostrap/ckains
+chmod +x "$DST_DIR"/.zoostrap/ckains
+
+cat >"$DST_DIR"/.zoostrap/run <<EOF
+#!/bin/sh
+dir="\`dirname "\$0"\`"
+exec "\$dir"/ckains -R "\$dir"/.. -w / \${1+"\$@"}
+EOF
+chmod +x "$DST_DIR"/.zoostrap/run
+
+cat >"$DST_DIR"/.zoostrap/srun <<EOF
+#!/bin/sh
+dir="\`dirname "\$0"\`"
+exec env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+     "\$dir"/ckains -S "\$dir"/.. -w / \${1+"\$@"}
+EOF
+chmod +x "$DST_DIR"/.zoostrap/srun
 
 info "Updating distro..."
-if [ "$ZS_NO_UPDATE" != 1 ]; then
-  $SANDBOX_S sh -c "$ZS_DISTRIB_UPDATE" || true
+if [ "$ZS_UPDATE" != false ]; then
+  "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPDATE" || true
 else
-  info "Skipped (ZS_NO_UPDATE=$ZS_NO_UPDATE)."
+  info "Skipped (ZS_UPDATE=$ZS_UPDATE)."
 fi
 
 info "Upgrading distro..."
-if [ "$ZS_NO_UPGRADE" != 1 ]; then
-  $SANDBOX_S sh -c "$ZS_DISTRIB_UPGRADE" || true
+if [ "$ZS_UPGRADE" != false ]; then
+  "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPGRADE" || true
 else
-  info "Skipped (ZS_NO_UPGRADE=$ZS_NO_UPGRADE)."
+  info "Skipped (ZS_UPGRADE=$ZS_UPGRADE)."
 fi
 
 info "Installing packages..."
 if [ -n "$ZS_DISTRIB_PACKAGES" ]; then
   info "Requested packages: $ZS_DISTRIB_PACKAGES..."
-  $SANDBOX_S sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || true
+  "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || true
 else
   info "Skipped, no package requested (ZS_DISTRIB_PACKAGES=$ZS_DISTRIB_PACKAGES)."
 fi
 
 if [ "${1+1}" = 1 ]; then
   info "Executing command:" ${1+"$@"}
-  $SANDBOX_U ${1+"$@"}
+  "$DST_DIR"/.zoostrap/run ${1+"$@"}
 fi
-

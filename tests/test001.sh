@@ -27,7 +27,18 @@ TEST_CASE="zoostrap and wget"
 $KAINS true
 
 # Test zoostrap distros
-env ZS_DISTRIB_ID=Ubuntu ZS_DISTRIB_RELEASE=12.04 \
-    ZS_DISTRIB_PACKAGES="wget" KAINS_EXE=$KAINS \
-    $ZOOSTRAP rootfs
-$KAINS -R rootfs -- wget -O google.html http://www.google.com
+env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04 \
+    ZS_DISTRIB_PACKAGES="wget" \
+    $ZOOSTRAP rootfs-ubuntu-12.04 wget -O google.html http://www.google.com
+
+env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04 \
+    ZS_DISTRIB_PACKAGES="wget" \
+    $ZOOSTRAP rootfs-ubuntu-14.04 wget -O google.html http://www.google.com
+
+env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7 \
+    ZS_DISTRIB_PACKAGES="wget" \
+    $ZOOSTRAP rootfs-centos-7 wget -O google.html http://www.google.com
+
+env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6 \
+    ZS_DISTRIB_PACKAGES="wget" \
+    $ZOOSTRAP rootfs-centos-6 wget -O google.html http://www.google.com

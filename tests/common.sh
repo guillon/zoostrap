@@ -41,7 +41,7 @@ cleanup() {
     trap - INT QUIT TERM EXIT
     test_cleanup
     cd $TMPDIR # ensure not in TMPTEST before cleaning
-    [ -d "$TMPTEST" ] && [ "$KEEPTEST" = 0 ] && [ "$KEEPFAIL" = 0 -o $exit = 0 ] && rm -rf $TMPTEST
+    [ -d "$TMPTEST" ] && [ "$KEEPTEST" = 0 ] && [ "$KEEPFAIL" = 0 -o $exit = 0 ] && (chmod -R +rwX "$TMPTEST" 2>/dev/null || true; rm -rf "$TMPTEST")
     [ $exit != 0 -o $_skipped = 1 ] || success
     [ $exit = 0 -o $exit -ge 128 ] || failure
     [ $exit = 0 -o $exit -lt 128 ] || interrupted && trap - EXIT && exit $exit

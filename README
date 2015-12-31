@@ -6,12 +6,12 @@
 The zoostrap utility is a simple tool for bootstraping a Linux host
 distribution into a ckains container, installing packages and running
 commands in the container. Refer to ckains for details on the actual
-container tool used by default.
+container tool used.
 
 The list of supported distributions is currently:
-- Ubuntu 12.04
-- Ubuntu 14.04
-- CentOS 7
+- Ubuntu 12.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04)
+- Ubuntu 14.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04)
+- CentOS 7 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7)
 
 This tool is still a prototype and as of now configuration is passed through
 the environment, refer to the TODO file for next steps.
@@ -36,12 +36,12 @@ The first command gets the zoostrap tool and the second command sets execution b
 A typical usage is to bootstrap for instance a CentOS 7 distribution and then
 execute a build command into the installed distribution root tree.
 
-For instance, assuming ckains and zoostrap are available in the path:
+For instance, assuming  zoostrap is available in the path:
 
     $ env ZS_DISTRIB_ID=Ubuntu ZS_DISTRIB_RELEASE=12.04 \
       ZS_DISTRIB_PACKAGES="wget" KAINS_EXE=ckains \
       zoostrap rootfs
-    $ ckains -R rootfs -- wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+    $ rootfs/.zoostrap/run wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
     ...
 
 The first command installs a Ubuntu 12.04 core root tree in the rootfs/
@@ -49,13 +49,9 @@ directory and install the wget package.
 
 The second command executes a wget command in the just installed distro.
 
-Note: as of now, zoostrap does not install ckains itself, hence it must be
-installed first. This should be fixed in the future.
-
 # Build and Install
 
-This script requires bash, curl and a container execution tool such as ckains;
-kains or proot.
+This script requires bash and wget packages.
 
 The script can be used directly without installation.
 
@@ -89,8 +85,6 @@ Refer to the TODO file for future work:
 https://github.com/guillon/zoostrap/blob/master/TODO
 
 Refer to ckains at: https://github.com/mickael-guene/ckains
-
-Refer to proot at: http://proot.me
 
 # License
 
