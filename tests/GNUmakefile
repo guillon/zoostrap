@@ -17,7 +17,7 @@
 #
 
 SHELL=/bin/sh
-ZOOSTRAP=../zoostrap
+ZOOSTRAP=$(abspath ../zoostrap)
 
 TESTS:=$(wildcard test*.sh)
 
