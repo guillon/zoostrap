@@ -17,8 +17,6 @@
 # v2.0 along with zoostrap. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ZS_VERSION=0.2.0
-
 set -eu
 set -o pipefail
 
