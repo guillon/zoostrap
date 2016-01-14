@@ -35,6 +35,8 @@ DST_DIR="${1:-}"
 
 ZS_CKAINS_URL="https://github.com/mickael-guene/ckains/releases/download/v1.0.1/ckains.x86_64"
 ZS_CKAINS_SHA1SUM=603abe3b505770181e5f61a709ff27cf6c0aea8c
+ZS_PROOT_URL="https://github.com/proot-me/proot-static-build/raw/master/static/proot-x86_64"
+ZS_PROOT_SHA1SUM="5e713559fd336074971590e8cbe7ab1593ffabfc"
 
 function error() { echo "$basename: error: $1" >&2; exit 1; }
 function warning() { echo "$basename: warning: $1" >&2; }
@@ -78,17 +80,6 @@ esac
 [ -n "$DST_DIR" ] || error "missing dst_dir argument"
 shift
 
-tmpdir=$(mktemp -d)
-
-info "Downloading ckains from $ZS_CKAINS_URL..."
-$WGET -O "$tmpdir"/ckains "$ZS_CKAINS_URL" || error "failed to download ckains tool from $ZS_CKAINS_URL"
-echo "$ZS_CKAINS_SHA1SUM  $tmpdir/ckains" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_CKAINS_URL, expecting: $ZS_CKAINS_SHA1SUM"
-
-info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
-$WGET -O "$tmpdir"/distro.tgz "$ZS_DISTRIB_URL" || error "failed to download image from $ZS_DISTRIB_URL"
-echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/distro.tgz" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
-
-
 if [ -d "$DST_DIR" ]; then
     info "Trashing former $DST_DIR..."
     dst_dir_dirname="$(dirname "$(readlink -e "$DST_DIR")")"
@@ -105,6 +96,20 @@ info "Cleaning trash dirs..."
 chmod -R +rwX "$dst_dir_dirname"/trash.zoostrap.* 2>/dev/null || true
 rm -rf "$dst_dir_dirname"/trash.zoostrap.* || warning "could not remove completly trash dirs when running: rm -rf $dst_dir_dirname/trash.zoostrap.*"
 
+tmpdir="$(mktemp -d -p "$dst_dir_dirname" tmp.zoostrap.XXXXXX)"
+
+info "Downloading ckains from $ZS_CKAINS_URL..."
+$WGET -O "$tmpdir"/ckains "$ZS_CKAINS_URL" || error "failed to download ckains tool from $ZS_CKAINS_URL"
+echo "$ZS_CKAINS_SHA1SUM  $tmpdir/ckains" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_CKAINS_URL, expecting: $ZS_CKAINS_SHA1SUM"
+
+info "Downloading proot from $ZS_PROOT_URL..."
+$WGET -O "$tmpdir"/proot "$ZS_PROOT_URL" || error "failed to download ckains tool from $ZS_PROOT_URL"
+echo "$ZS_PROOT_SHA1SUM  $tmpdir/proot" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_PROOT_URL, expecting: $ZS_PROOT_SHA1SUM"
+
+info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
+$WGET -O "$tmpdir"/distro.tgz "$ZS_DISTRIB_URL" || error "failed to download image from $ZS_DISTRIB_URL"
+echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/distro.tgz" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
+
 info "Extracting $ZS_DISTRIB_URL in $DST_DIR..."
 tar xzf "$tmpdir"/distro.tgz -C "$DST_DIR" 2>/dev/null || true
 chmod u+rwx "$DST_DIR"
@@ -112,6 +117,8 @@ chmod u+rwx "$DST_DIR"
 mkdir -p "$DST_DIR"/.zoostrap
 mv "$tmpdir"/ckains "$DST_DIR"/.zoostrap/ckains
 chmod +x "$DST_DIR"/.zoostrap/ckains
+mv "$tmpdir"/proot "$DST_DIR"/.zoostrap/proot
+chmod +x "$DST_DIR"/.zoostrap/proot
 
 cat >"$DST_DIR"/.zoostrap/run <<EOF
 #!/bin/sh
@@ -124,7 +131,7 @@ cat >"$DST_DIR"/.zoostrap/srun <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
 exec env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-     "\$dir"/ckains -S "\$dir"/.. -w / \${1+"\$@"}
+     "\$dir"/proot -S "\$dir"/.. -w / \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/srun
 
