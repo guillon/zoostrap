@@ -4,13 +4,18 @@
 # Synopsys
 
 The zoostrap utility is a simple tool for bootstraping a Linux host
-distribution into a ckains container, installing packages and running
-commands in the container. Refer to ckains for details on the actual
-container tool used.
+distribution and running command in an unprivileged container.
+
+Actually this tool proceeds in three steps:
+- download a reference distribution archive an extract into the specified
+rootfs dir
+- execute installation of additional packages into this rootfs with `PRoot`_
+- execute actual commands into this rootfs with `ckains`_
 
 The list of supported distributions is currently:
 - Ubuntu 12.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04)
 - Ubuntu 14.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04)
+- CentOS 6 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6)
 - CentOS 7 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7)
 
 This tool is still a prototype and as of now configuration is passed through
@@ -33,13 +38,13 @@ The first command gets the zoostrap tool and the second command sets execution b
 
 # Examples
 
-A typical usage is to bootstrap for instance a CentOS 7 distribution and then
+A typical usage is to bootstrap for instance a CentOS or Ubuntu distribution and then
 execute a build command into the installed distribution root tree.
 
 For instance, assuming  zoostrap is available in the path:
 
-    $ env ZS_DISTRIB_ID=Ubuntu ZS_DISTRIB_RELEASE=12.04 \
-      ZS_DISTRIB_PACKAGES="wget" KAINS_EXE=ckains \
+    $ env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04 \
+      ZS_DISTRIB_PACKAGES="wget" \
       zoostrap rootfs
     $ rootfs/.zoostrap/run wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
     ...
@@ -49,9 +54,17 @@ directory and install the wget package.
 
 The second command executes a wget command in the just installed distro.
 
+One can also do this with a single command, passing the command to execute as parameter:
+
+    $ env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04 \
+      ZS_DISTRIB_PACKAGES="wget" \
+      zoostrap rootfs wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+    ...
+
 # Build and Install
 
-This script requires bash and wget packages.
+This script requires bash and wget packages and should work on any Linux
+distribution for x86_64 architecture with a kernel >= 3.0.
 
 The script can be used directly without installation.
 
@@ -85,6 +98,8 @@ Refer to the TODO file for future work:
 https://github.com/guillon/zoostrap/blob/master/TODO
 
 Refer to ckains at: https://github.com/mickael-guene/ckains
+
+Refer to proot at: http://proot.me
 
 # License
 
