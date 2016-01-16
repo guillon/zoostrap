@@ -43,6 +43,7 @@ function cleanup() { local code=$?; trap - INT TERM QUIT EXIT; [ ! -d "${tmpdir:
 trap cleanup INT TERM QUIT EXIT
 
 ZS_DISTRIB_URL=""
+ZS_DISTRIB_TYPE="tar.gz"
 case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
   ubuntu-12.04) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-amd64.tar.gz"
@@ -51,6 +52,14 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
   ubuntu-14.04) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.2-core-amd64.tar.gz"
     ZS_DISTRIB_SHA1SUM="0993465651afdf4e2ea18af6d0b3233080f8d6f2"
+    ;;
+  centos-5) \
+    ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
+    ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"
+    ZS_DISTRIB_TYPE="tar.xz"
+# The centos 5 openvz image does not have yum installed, use docker image above
+#    ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-5-x86_64.tar.gz"
+#    ZS_DISTRIB_SHA1SUM="048763ea19416323a09ec94cee7e0cc859f284c2"
     ;;
   centos-6) \
     ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-6-x86_64-minimal.tar.gz"
@@ -105,11 +114,21 @@ $WGET -O "$tmpdir"/proot "$ZS_PROOT_URL" || error "failed to download ckains too
 echo "$ZS_PROOT_SHA1SUM  $tmpdir/proot" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_PROOT_URL, expecting: $ZS_PROOT_SHA1SUM"
 
 info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
-$WGET -O "$tmpdir"/distro.tgz "$ZS_DISTRIB_URL" || error "failed to download image from $ZS_DISTRIB_URL"
-echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/distro.tgz" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
+$WGET -O "$tmpdir/distro.$ZS_DISTRIB_TYPE" "$ZS_DISTRIB_URL" || error "failed to download image from $ZS_DISTRIB_URL"
+echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/distro.$ZS_DISTRIB_TYPE" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
 
 info "Extracting $ZS_DISTRIB_URL in $DST_DIR..."
-tar xzf "$tmpdir"/distro.tgz -C "$DST_DIR" 2>/dev/null || true
+case "$ZS_DISTRIB_TYPE" in
+    tar.gz) \
+        gzip -d - < "$tmpdir/distro.$ZS_DISTRIB_TYPE" | tar xf - -C "$DST_DIR" 2>/dev/null || true
+        ;;
+    tar.xz) \
+        xz -d - < "$tmpdir/distro.$ZS_DISTRIB_TYPE" | tar xf - -C "$DST_DIR" 2>/dev/null || true
+        ;;
+    *) \
+        error "unsupported archive type $ZS_DISTRIB_TYPE for image: $ZS_DISTRIB_URL"
+        ;;
+esac
 chmod u+rwx "$DST_DIR"
 
 mkdir -p "$DST_DIR"/.zoostrap
