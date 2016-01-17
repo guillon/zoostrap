@@ -43,7 +43,6 @@ function cleanup() { local code=$?; trap - INT TERM QUIT EXIT; [ ! -d "${tmpdir:
 trap cleanup INT TERM QUIT EXIT
 
 ZS_DISTRIB_URL=""
-ZS_DISTRIB_TYPE="tar.gz"
 case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
   ubuntu-12.04) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-amd64.tar.gz"
@@ -56,7 +55,6 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
   centos-5) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"
-    ZS_DISTRIB_TYPE="tar.xz"
 # The centos 5 openvz image does not have yum installed, use docker image above
 #    ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-5-x86_64.tar.gz"
 #    ZS_DISTRIB_SHA1SUM="048763ea19416323a09ec94cee7e0cc859f284c2"
@@ -72,22 +70,18 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
   fedora-20) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/10ada29063147fde9e39190f4c2344b6e6e659e6/fedora-20-medium.tar.xz"
     ZS_DISTRIB_SHA1SUM="925fb62ffa06fca9d8175329a7a25d568a6d2569"
-    ZS_DISTRIB_TYPE="tar.xz"
     ;;
   fedora-21) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/e32493b9601c3535cd6e0d0a8ff61d8fa95afb83/fedora-21-release.tar.xz"
     ZS_DISTRIB_SHA1SUM="cebddbab94c873187e030a5aaab807db46f1edd7"
-    ZS_DISTRIB_TYPE="tar.xz"
     ;;
   fedora-22) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/e5a0a567230ca8350d2be9b100604858fc898c0b/fedora-22-release.tar.xz"
     ZS_DISTRIB_SHA1SUM="e0bdc85ba132391a39cae293db351a97f2ddbbcf"
-    ZS_DISTRIB_TYPE="tar.xz"
     ;;
   fedora-23) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/a079b0713dca2db8bce3a07c9a2caae0e276bebf/fedora-23-20160104.tar.xz"
     ZS_DISTRIB_SHA1SUM="fedora-23-20160104.tar.xz"
-    ZS_DISTRIB_TYPE="tar.xz"
     ;;
 esac
 case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
@@ -143,20 +137,24 @@ info "Downloading proot from $ZS_PROOT_URL..."
 $WGET -O "$tmpdir"/proot "$ZS_PROOT_URL" || error "failed to download ckains tool from $ZS_PROOT_URL"
 echo "$ZS_PROOT_SHA1SUM  $tmpdir/proot" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_PROOT_URL, expecting: $ZS_PROOT_SHA1SUM"
 
+distro_arch="$(basename "$ZS_DISTRIB_URL")"
 info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
-$WGET -O "$tmpdir/distro.$ZS_DISTRIB_TYPE" "$ZS_DISTRIB_URL" || error "failed to download image from $ZS_DISTRIB_URL"
-echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/distro.$ZS_DISTRIB_TYPE" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
+$WGET -O "$tmpdir/$distro_arch" "$ZS_DISTRIB_URL" || error "failed to download image from $ZS_DISTRIB_URL"
+echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/$distro_arch" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
 
 info "Extracting $ZS_DISTRIB_URL in $DST_DIR..."
-case "$ZS_DISTRIB_TYPE" in
-    tar.gz) \
-        gzip -d - < "$tmpdir/distro.$ZS_DISTRIB_TYPE" | tar xf - -C "$DST_DIR" 2>/dev/null || true
+case "$distro_arch" in
+    *.tgz|*.tar.gz) \
+        gzip -d - < "$tmpdir/$distro_arch" | tar xf - -C "$DST_DIR" 2>/dev/null || true
         ;;
-    tar.xz) \
-        xz -d - < "$tmpdir/distro.$ZS_DISTRIB_TYPE" | tar xf - -C "$DST_DIR" 2>/dev/null || true
+    *.tar.xz) \
+        xz -d - < "$tmpdir/$distro_arch" | tar xf - -C "$DST_DIR" 2>/dev/null || true
+        ;;
+    *.tar.bz2) \
+        bzip2 -d - < "$tmpdir/$distro_arch" | tar xf - -C "$DST_DIR" 2>/dev/null || true
         ;;
     *) \
-        error "unsupported archive type $ZS_DISTRIB_TYPE for image: $ZS_DISTRIB_URL"
+        error "unsupported archive type for image: $ZS_DISTRIB_URL"
         ;;
 esac
 chmod u+rwx "$DST_DIR"
