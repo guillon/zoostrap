@@ -81,7 +81,7 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
     ;;
   fedora-23) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/a079b0713dca2db8bce3a07c9a2caae0e276bebf/fedora-23-20160104.tar.xz"
-    ZS_DISTRIB_SHA1SUM="fedora-23-20160104.tar.xz"
+    ZS_DISTRIB_SHA1SUM="b7b550f387a604904d1d7ab0a194a92cb1007a59"
     ;;
 esac
 case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
