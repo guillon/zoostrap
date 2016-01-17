@@ -69,17 +69,47 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
     ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-7-x86_64-minimal.tar.gz"
     ZS_DISTRIB_SHA1SUM="4277ccd7d363a97593fcd74614be43ad9aca6cac"
     ;;
+  fedora-20) \
+    ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/10ada29063147fde9e39190f4c2344b6e6e659e6/fedora-20-medium.tar.xz"
+    ZS_DISTRIB_SHA1SUM="925fb62ffa06fca9d8175329a7a25d568a6d2569"
+    ZS_DISTRIB_TYPE="tar.xz"
+    ;;
+  fedora-21) \
+    ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/e32493b9601c3535cd6e0d0a8ff61d8fa95afb83/fedora-21-release.tar.xz"
+    ZS_DISTRIB_SHA1SUM="cebddbab94c873187e030a5aaab807db46f1edd7"
+    ZS_DISTRIB_TYPE="tar.xz"
+    ;;
+  fedora-22) \
+    ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/e5a0a567230ca8350d2be9b100604858fc898c0b/fedora-22-release.tar.xz"
+    ZS_DISTRIB_SHA1SUM="e0bdc85ba132391a39cae293db351a97f2ddbbcf"
+    ZS_DISTRIB_TYPE="tar.xz"
+    ;;
+  fedora-23) \
+    ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/a079b0713dca2db8bce3a07c9a2caae0e276bebf/fedora-23-20160104.tar.xz"
+    ZS_DISTRIB_SHA1SUM="fedora-23-20160104.tar.xz"
+    ZS_DISTRIB_TYPE="tar.xz"
+    ;;
 esac
-case "${ZS_DISTRIB_ID}" in
-  ubuntu) \
+case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
+  ubuntu-*) \
     ZS_DISTRIB_UPDATE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list && apt-get update -qqy"
     ZS_DISTRIB_UPGRADE="apt-get upgrade -qqy"
     ZS_DISTRIB_INSTALL="apt-get install -qqy"
     ;;
-  centos) \
+  centos-*) \
     ZS_DISTRIB_UPDATE="rm -f /etc/yum.repos.d/vz.repo && yum update -y"
     ZS_DISTRIB_UPGRADE="true"
     ZS_DISTRIB_INSTALL="yum install -y"
+    ;;
+  fedora-20|fedora-21) \
+    ZS_DISTRIB_UPDATE="yum update -y"
+    ZS_DISTRIB_UPGRADE="true"
+    ZS_DISTRIB_INSTALL="yum install -y"
+    ;;
+  fedora-*) \
+    ZS_DISTRIB_UPDATE="dnf update -y"
+    ZS_DISTRIB_UPGRADE="true"
+    ZS_DISTRIB_INSTALL="dnf install -y"
     ;;
 esac
 
