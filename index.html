@@ -25,16 +25,26 @@
 <a id="synopsys" class="anchor" href="#synopsys" aria-hidden="true"><span class="octicon octicon-link"></span></a>Synopsys</h1>
 
 <p>The zoostrap utility is a simple tool for bootstraping a Linux host
-distribution into a ckains container, installing packages and running
-commands in the container. Refer to ckains for details on the actual
-container tool used by default.</p>
+distribution and running command in an unprivileged container.</p>
 
-<p>The list of supported distributions is currently:</p>
+<p>Actually this tool proceeds in three steps:</p>
 
 <ul>
-<li>Ubuntu 12.04</li>
-<li>Ubuntu 14.04</li>
-<li>CentOS 7</li>
+<li>download a reference distribution archive an extract into the specified
+rootfs dir</li>
+<li>execute installation of additional packages into this rootfs with <code>PRoot</code>_</li>
+<li>execute actual commands into this rootfs with <code>ckains</code>_</li>
+</ul>
+
+<p>The list of available distributions is currently:</p>
+
+<ul>
+<li>Ubuntu 12.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04)</li>
+<li>Ubuntu 14.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04)</li>
+<li>CentOS 5 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5)</li>
+<li>CentOS 6 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6)</li>
+<li>CentOS 7 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7)</li>
+<li>Fedora 20/21/22/23 (ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=20/21/22/23)</li>
 </ul>
 
 <p>This tool is still a prototype and as of now configuration is passed through
@@ -60,15 +70,15 @@ $ chmod +x ~/bin/zoostrap
 <h1>
 <a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h1>
 
-<p>A typical usage is to bootstrap for instance a CentOS 7 distribution and then
+<p>A typical usage is to bootstrap for instance a CentOS or Ubuntu distribution and then
 execute a build command into the installed distribution root tree.</p>
 
-<p>For instance, assuming ckains and zoostrap are available in the path:</p>
+<p>For instance, assuming  zoostrap is available in the path:</p>
 
-<pre><code>$ env ZS_DISTRIB_ID=Ubuntu ZS_DISTRIB_RELEASE=12.04 \
-  ZS_DISTRIB_PACKAGES="wget" KAINS_EXE=ckains \
+<pre><code>$ env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04 \
+  ZS_DISTRIB_PACKAGES="wget" \
   zoostrap rootfs
-$ ckains -R rootfs -- wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+$ rootfs/.zoostrap/run wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
 ...
 </code></pre>
 
@@ -77,14 +87,19 @@ directory and install the wget package.</p>
 
 <p>The second command executes a wget command in the just installed distro.</p>
 
-<p>Note: as of now, zoostrap does not install ckains itself, hence it must be
-installed first. This should be fixed in the future.</p>
+<p>One can also do this with a single command, passing the command to execute as parameter:</p>
+
+<pre><code>$ env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04 \
+  ZS_DISTRIB_PACKAGES="wget" \
+  zoostrap rootfs wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
+...
+</code></pre>
 
 <h1>
 <a id="build-and-install" class="anchor" href="#build-and-install" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build and Install</h1>
 
-<p>This script requires bash, curl and a container execution tool such as ckains;
-kains or proot.</p>
+<p>This script requires bash and wget packages and should work on any Linux
+distribution for x86_64 architecture with a kernel &gt;= 3.0.</p>
 
 <p>The script can be used directly without installation.</p>
 
