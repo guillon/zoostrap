@@ -12,11 +12,13 @@ rootfs dir
 - execute installation of additional packages into this rootfs with `PRoot`_
 - execute actual commands into this rootfs with `ckains`_
 
-The list of supported distributions is currently:
+The list of available distributions is currently:
 - Ubuntu 12.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04)
 - Ubuntu 14.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04)
+- CentOS 5 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5)
 - CentOS 6 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6)
 - CentOS 7 (ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7)
+- Fedora 20/21/22/23 (ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=20/21/22/23)
 
 This tool is still a prototype and as of now configuration is passed through
 the environment, refer to the TODO file for next steps.
