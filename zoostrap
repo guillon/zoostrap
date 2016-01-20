@@ -171,11 +171,27 @@ chmod +x "$DST_DIR"/.zoostrap/proot
 cat >"$DST_DIR"/.zoostrap/run <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
-exec env -i \\
-     HOME=/nonexistent \\
-     PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\
-     "\$dir"/ckains -r "\$dir"/.. -w / \\
-     $ZS_R_BINDINGS \\
+bindings=""
+for i in $ZS_R_BINDINGS; do
+    case "\$i" in
+    */) [ -d "\$i" ] && bindings="\$bindings -b \$i"
+    ;;
+    *)  [ -f "\$i" ] && bindings="\$bindings -b \$i"
+    esac
+done
+for i in \`env -0 | tr -d '\n' | tr '\0' '\n' | sed 's/^\([^=]*\).*/\1/'\`; do
+    case "\$i" in
+    http_proxy|https_proxy|ftp_proxy|all_proxy|no_proxy) : ;;
+    HTTP_PROXY|HTTPS_PROXY|FTP_PROXY|ALL_PROXY|NO_PROXY) : ;;
+    *) unset "\$i" ;;
+    esac
+done
+HOME=/nonexistent
+export HOME
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+exec "\$dir"/ckains -r "\$dir"/.. -w / \\
+     \$bindings \\
      \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/run
@@ -183,11 +199,26 @@ chmod +x "$DST_DIR"/.zoostrap/run
 cat >"$DST_DIR"/.zoostrap/srun <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
-exec env -i \\
-     HOME=/root \\
-     PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\
-     "\$dir"/proot -0 -r "\$dir"/.. -w / \\
-     $ZS_S_BINDINGS \\
+for i in $ZS_S_BINDINGS; do
+    case "\$i" in
+    */) [ -d "\$i" ] && bindings="\$bindings -b \$i"
+    ;;
+    *)  [ -f "\$i" ] && bindings="\$bindings -b \$i"
+    esac
+done
+for i in \`env -0 | tr -d '\n' | tr '\0' '\n' | sed 's/^\([^=]*\).*/\1/'\`; do
+    case "\$i" in
+    http_proxy|https_proxy|ftp_proxy|all_proxy|no_proxy) : ;;
+    HTTP_PROXY|HTTPS_PROXY|FTP_PROXY|ALL_PROXY|NO_PROXY) : ;;
+    *) unset "\$i" ;;
+    esac
+done
+HOME=/nonexistent
+export HOME
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+exec "\$dir"/proot -0 -r "\$dir"/.. -w / \\
+     \$bindings \\
      \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/srun
