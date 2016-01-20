@@ -171,15 +171,24 @@ chmod +x "$DST_DIR"/.zoostrap/proot
 cat >"$DST_DIR"/.zoostrap/run <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
-exec "\$dir"/ckains -r "\$dir"/.. $ZS_R_BINDINGS -w / \${1+"\$@"}
+exec env -i \\
+     HOME=/nonexistent \\
+     PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\
+     "\$dir"/ckains -r "\$dir"/.. -w / \\
+     $ZS_R_BINDINGS \\
+     \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/run
 
 cat >"$DST_DIR"/.zoostrap/srun <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
-exec env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-     "\$dir"/proot -0 -r "\$dir"/.. $ZS_S_BINDINGS -w / \${1+"\$@"}
+exec env -i \\
+     HOME=/root \\
+     PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\
+     "\$dir"/proot -0 -r "\$dir"/.. -w / \\
+     $ZS_S_BINDINGS \\
+     \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/srun
 
