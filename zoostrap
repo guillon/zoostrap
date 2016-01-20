@@ -28,6 +28,9 @@ ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
 ZS_DISTRIB_PACKAGES="${ZS_DISTRIB_PACKAGES:-}"
 ZS_UPDATE="${ZS_UPDATE:-true}"
 ZS_UPGRADE="${ZS_UPGRADE:-false}"
+ZS_R_BINDINGS="${ZS_R_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/hosts.equiv -b /etc/mtab -b /etc/netgroup -b /etc/networks -b /etc/passwd -b /etc/group -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /etc/localtime -b /dev/ -b /sys/ -b /proc/ -b /run/}"
+ZS_S_BINDINGS="${ZS_S_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /dev/ -b /sys/ -b /proc/}"
+
 WGET="${WGET:-wget --no-check-certificate --tries 3 --quiet}"
 DST_DIR="${1:-}"
 
@@ -168,7 +171,7 @@ chmod +x "$DST_DIR"/.zoostrap/proot
 cat >"$DST_DIR"/.zoostrap/run <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
-exec "\$dir"/ckains -R "\$dir"/.. -w / \${1+"\$@"}
+exec "\$dir"/ckains -r "\$dir"/.. $ZS_R_BINDINGS -w / \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/run
 
@@ -176,7 +179,7 @@ cat >"$DST_DIR"/.zoostrap/srun <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
 exec env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-     "\$dir"/proot -S "\$dir"/.. -w / \${1+"\$@"}
+     "\$dir"/proot -0 -r "\$dir"/.. $ZS_S_BINDINGS -w / \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/srun
 
