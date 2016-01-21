@@ -28,8 +28,8 @@ ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
 ZS_DISTRIB_PACKAGES="${ZS_DISTRIB_PACKAGES:-}"
 ZS_UPDATE="${ZS_UPDATE:-true}"
 ZS_UPGRADE="${ZS_UPGRADE:-false}"
-ZS_R_BINDINGS="${ZS_R_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/hosts.equiv -b /etc/mtab -b /etc/netgroup -b /etc/networks -b /etc/passwd -b /etc/group -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /etc/localtime -b /dev/ -b /sys/ -b /proc/ -b /run/}"
-ZS_S_BINDINGS="${ZS_S_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /dev/ -b /sys/ -b /proc/}"
+ZS_R_BINDINGS="${ZS_R_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/hosts.equiv -b /etc/mtab -b /etc/netgroup -b /etc/networks -b /etc/passwd -b /etc/group -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /etc/localtime -b /dev/ -b /sys/ -b /proc/ -b /tmp/ -b /run/}"
+ZS_S_BINDINGS="${ZS_S_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /dev/ -b /sys/ -b /proc/ -b /tmp/ -b /run/shm/}"
 
 WGET="${WGET:-wget --no-check-certificate --tries 3 --quiet}"
 DST_DIR="${1:-}"
@@ -171,12 +171,15 @@ chmod +x "$DST_DIR"/.zoostrap/proot
 cat >"$DST_DIR"/.zoostrap/run <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
+rootfs="\$dir/.."
+is_dir_weak() { [ -e "\$1" ] || return 0; [ -d "\$1" ] || return 1; }
+is_reg_weak() { [ -e "\$1" ] || return 0; [ -f "\$1" ] || return 1; [ ! -h "\$1" ] || return 1; }
 bindings=""
 for i in $ZS_R_BINDINGS; do
     case "\$i" in
-    */) [ -d "\$i" ] && bindings="\$bindings -b \$i"
+    */) [ -d "\$i" ] && is_dir_weak "\$rootfs/\$i" && bindings="\$bindings -b \$i"
     ;;
-    *)  [ -f "\$i" ] && bindings="\$bindings -b \$i"
+    *)  [ -f "\$i" ] && is_reg_weak "\$rootfs/\$i" && bindings="\$bindings -b \$i"
     esac
 done
 for i in \`env -0 | tr -d '\n' | tr '\0' '\n' | sed 's/^\([^=]*\).*/\1/'\`; do
@@ -190,7 +193,7 @@ HOME=/nonexistent
 export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
-exec "\$dir"/ckains -r "\$dir"/.. -w / \\
+exec "\$dir"/ckains -r "\$rootfs" -w / \\
      \$bindings \\
      \${1+"\$@"}
 EOF
@@ -199,11 +202,14 @@ chmod +x "$DST_DIR"/.zoostrap/run
 cat >"$DST_DIR"/.zoostrap/srun <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
+rootfs="\$dir/.."
+is_dir_weak() { [ -e "\$1" ] || return 0; [ -d "\$1" ] || return 1; }
+is_reg_weak() { [ -e "\$1" ] || return 0; [ -f "\$1" ] || return 1; [ ! -h "\$1" ] || return 1; }
 for i in $ZS_S_BINDINGS; do
     case "\$i" in
-    */) [ -d "\$i" ] && bindings="\$bindings -b \$i"
+    */) [ -d "\$i" ] && is_dir_weak "\$rootfs/\$i" && bindings="\$bindings -b \$i"
     ;;
-    *)  [ -f "\$i" ] && bindings="\$bindings -b \$i"
+    *)  [ -f "\$i" ] && is_reg_weak "\$rootfs/\$i" && bindings="\$bindings -b \$i"
     esac
 done
 for i in \`env -0 | tr -d '\n' | tr '\0' '\n' | sed 's/^\([^=]*\).*/\1/'\`; do
@@ -217,7 +223,7 @@ HOME=/nonexistent
 export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
-exec "\$dir"/proot -0 -r "\$dir"/.. -w / \\
+exec "\$dir"/proot -0 -r "\$rootfs" -w / \\
      \$bindings \\
      \${1+"\$@"}
 EOF
