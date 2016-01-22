@@ -1,16 +1,16 @@
 
 [![Build Status](https://api.travis-ci.org/guillon/zoostrap.png?branch=master)](https://travis-ci.org/guillon/zoostrap/branches)
 
-# Synopsys
+# Synopsis
 
-The zoostrap utility is a simple tool for bootstraping a Linux host
+The zoostrap utility is a simple tool for bootstrapping a Linux host
 distribution and running command in an unprivileged container.
 
 Actually this tool proceeds in three steps:
 - download a reference distribution archive an extract into the specified
-rootfs dir
-- execute installation of additional packages into this rootfs with `PRoot`_
-- execute actual commands into this rootfs with `ckains`_
+rootfs directory
+- execute installation of additional packages into this rootfs with `PRoot`
+- execute actual commands into this rootfs with `ckains`
 
 The list of available distributions is currently:
 - Ubuntu 12.04 (ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04)
@@ -62,6 +62,22 @@ One can also do this with a single command, passing the command to execute as pa
       ZS_DISTRIB_PACKAGES="wget" \
       zoostrap rootfs wget https://raw.githubusercontent.com/guillon/zoostrap/master/zoostrap
     ...
+# Parameters
+
+zoostrap gets parameters from the environment except for the rootfs directory
+to create which is passed as argument.
+
+The available parameters are:
+
+* ZS_DISTRIB_ID="<distro>": one of the known distribution listed above
+* ZS_DISTRIB_RELEASE="<release>": one of the known distro release listed above
+* ZS_DISTRIB_PACKAGES="<package_list": space separated list of packages to
+  install, note that package names are specific to distributions, it is up to
+  the user to give actual packages name depending on the <distro> used
+* ZS_WGET: override default wget command and options. The default wget command
+  is: `wget --wget --no-check-certificate --tries 3`. Note that you may safely
+  use --no-check-certificate without compromising security as all downloaded
+  files are checked against there known content hash (a sha1sum).
 
 # Build and Install
 
@@ -76,7 +92,7 @@ Build with:
 
     $ make all # a no-op actually
 
-Run unittests with:
+Run unit tests with:
 
     $ make check
 
@@ -101,7 +117,7 @@ https://github.com/guillon/zoostrap/blob/master/TODO
 
 Refer to ckains at: https://github.com/mickael-guene/ckains
 
-Refer to proot at: http://proot.me
+Refer to PRoot at: http://proot.me
 
 # License
 
