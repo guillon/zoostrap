@@ -58,17 +58,14 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
   centos-5) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"
-# The centos 5 openvz image does not have yum installed, use docker image above
-#    ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-5-x86_64.tar.gz"
-#    ZS_DISTRIB_SHA1SUM="048763ea19416323a09ec94cee7e0cc859f284c2"
     ;;
   centos-6) \
-    ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-6-x86_64-minimal.tar.gz"
-    ZS_DISTRIB_SHA1SUM="47b773ca9d5b7fc33a7e7e2d711f14b3564a4db9"
+    ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/20732d1bb34a9aba45c1c6f41576ed6bf3d8c619/docker/centos-6-root.tar.xz"
+    ZS_DISTRIB_SHA1SUM="d5a8ad4c4cff457aa0580cfb8c1cac1702b971cd"
     ;;
   centos-7) \
-    ZS_DISTRIB_URL="http://download.openvz.org/template/precreated/centos-7-x86_64-minimal.tar.gz"
-    ZS_DISTRIB_SHA1SUM="4277ccd7d363a97593fcd74614be43ad9aca6cac"
+    ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/e72a549845ecce5563d15e600f1e735a71095dcf/docker/c7-docker.tar.xz"
+    ZS_DISTRIB_SHA1SUM="8a42a19464ae4e85f0ceda0876e65d90c36b3e67"
     ;;
   fedora-20) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/10ada29063147fde9e39190f4c2344b6e6e659e6/fedora-20-medium.tar.xz"
