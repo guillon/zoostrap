@@ -130,16 +130,16 @@ rm -rf "$dst_dir_dirname"/trash.zoostrap.* || warning "could not remove completl
 tmpdir="$(mktemp -d -p "$dst_dir_dirname" tmp.zoostrap.XXXXXX)"
 
 info "Downloading ckains from $ZS_CKAINS_URL..."
-$ZS_WGET -O "$tmpdir"/ckains "$ZS_CKAINS_URL" 2>"$tmpdir"/wget.log || error "failed to download ckains tool from $ZS_CKAINS_URL: error code $?: error log: $(<wget.log)"
+$ZS_WGET -O "$tmpdir"/ckains "$ZS_CKAINS_URL" 2>"$tmpdir"/wget.log || error "failed to download ckains tool from $ZS_CKAINS_URL: error code $?: error log: $(<"$tmpdir"/wget.log)"
 echo "$ZS_CKAINS_SHA1SUM  $tmpdir/ckains" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_CKAINS_URL, expecting: $ZS_CKAINS_SHA1SUM"
 
 info "Downloading proot from $ZS_PROOT_URL..."
-$ZS_WGET -O "$tmpdir"/proot "$ZS_PROOT_URL" 2>"$tmpdir"/wget.log || error "failed to download ckains tool from $ZS_PROOT_URL:  error code $?: error log: $(<wget.log)"
+$ZS_WGET -O "$tmpdir"/proot "$ZS_PROOT_URL" 2>"$tmpdir"/wget.log || error "failed to download ckains tool from $ZS_PROOT_URL:  error code $?: error log: $(<"$tmpdir"/wget.log)"
 echo "$ZS_PROOT_SHA1SUM  $tmpdir/proot" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_PROOT_URL, expecting: $ZS_PROOT_SHA1SUM"
 
 distro_arch="$(basename "$ZS_DISTRIB_URL")"
 info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
-$ZS_WGET -O "$tmpdir/$distro_arch" "$ZS_DISTRIB_URL" 2>"$tmpdir"/wget.log || error "failed to download image from $ZS_DISTRIB_URL:  error code $?: error log: $(<wget.log)"
+$ZS_WGET -O "$tmpdir/$distro_arch" "$ZS_DISTRIB_URL" 2>"$tmpdir"/wget.log || error "failed to download image from $ZS_DISTRIB_URL:  error code $?: error log: $(<"$tmpdir"/wget.log)"
 echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/$distro_arch" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
 
 info "Extracting $ZS_DISTRIB_URL in $DST_DIR..."
