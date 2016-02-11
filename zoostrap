@@ -28,8 +28,8 @@ ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
 ZS_DISTRIB_PACKAGES="${ZS_DISTRIB_PACKAGES:-}"
 ZS_UPDATE="${ZS_UPDATE:-true}"
 ZS_UPGRADE="${ZS_UPGRADE:-false}"
-ZS_R_BINDINGS="${ZS_R_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/hosts.equiv -b /etc/mtab -b /etc/netgroup -b /etc/networks -b /etc/passwd -b /etc/group -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /etc/localtime -b /dev/ -b /sys/ -b /proc/ -b /tmp/ -b /run/}"
-ZS_S_BINDINGS="${ZS_S_BINDINGS:--b /etc/host.conf -b /etc/hosts -b /etc/nsswitch.conf -b  /etc/resolv.conf -b /dev/ -b /sys/ -b /proc/ -b /tmp/ -b /run/shm/}"
+ZS_R_BINDINGS="${ZS_R_BINDINGS:-/etc/host.conf /etc/hosts /etc/hosts.equiv /etc/mtab /etc/netgroup /etc/networks /etc/passwd /etc/group /etc/nsswitch.conf  /etc/resolv.conf /etc/localtime /dev/ /sys/ /proc/ /tmp/ /run/}"
+ZS_S_BINDINGS="${ZS_S_BINDINGS:-/etc/host.conf /etc/hosts /etc/nsswitch.conf  /etc/resolv.conf /dev/ /sys/ /proc/ /tmp/ /run/shm/}"
 
 ZS_WGET="${ZS_WGET:-wget --no-check-certificate --tries 3}"
 DST_DIR="${1:-}"
@@ -169,8 +169,8 @@ cat >"$DST_DIR"/.zoostrap/run <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
 rootfs="\$dir/.."
-is_dir_weak() { [ -e "\$1" ] || return 0; [ -d "\$1" ] || return 1; }
-is_reg_weak() { [ -e "\$1" ] || return 0; [ -f "\$1" ] || return 1; [ ! -h "\$1" ] || return 1; }
+is_dir_weak() { [ ! -h "\$1" ] || return 1; [ -e "\$1" ] || return 0; [ -d "\$1" ] || return 1; }
+is_reg_weak() { [ ! -h "\$1" ] || return 1; [ -e "\$1" ] || return 0; [ -f "\$1" ] || return 1; }
 bindings=""
 for i in $ZS_R_BINDINGS; do
     case "\$i" in
@@ -200,8 +200,9 @@ cat >"$DST_DIR"/.zoostrap/srun <<EOF
 #!/bin/sh
 dir="\`dirname "\$0"\`"
 rootfs="\$dir/.."
-is_dir_weak() { [ -e "\$1" ] || return 0; [ -d "\$1" ] || return 1; }
-is_reg_weak() { [ -e "\$1" ] || return 0; [ -f "\$1" ] || return 1; [ ! -h "\$1" ] || return 1; }
+is_dir_weak() { [ ! -h "\$1" ] || return 1; [ -e "\$1" ] || return 0; [ -d "\$1" ] || return 1; }
+is_reg_weak() { [ ! -h "\$1" ] || return 1; [ -e "\$1" ] || return 0; [ -f "\$1" ] || return 1; }
+bindings=""
 for i in $ZS_S_BINDINGS; do
     case "\$i" in
     */) [ -d "\$i" ] && is_dir_weak "\$rootfs/\$i" && bindings="\$bindings -b \$i"
