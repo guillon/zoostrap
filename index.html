@@ -52,6 +52,12 @@ rootfs directory</li>
 <p>This tool is still a prototype and as of now configuration is passed through
 the environment, refer to the TODO file for next steps.</p>
 
+<p>Note that this tool requires a kernel &gt;= 3.x in order to execute unprivileged
+containers.
+In particular if you have this kind of error:
+<code>ERROR: unshare failed with error Invalid argument</code>. The host distribution
+kernel is probably too old.</p>
+
 <h1>
 <a id="download" class="anchor" href="#download" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Download</h1>
 
