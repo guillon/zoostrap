@@ -179,7 +179,8 @@ for i in $ZS_R_BINDINGS; do
     *)  [ -f "\$i" ] && is_reg_weak "\$rootfs/\$i" && bindings="\$bindings -b \$i"
     esac
 done
-for i in \`env -0 | tr -d '\n' | tr '\0' '\n' | sed 's/^\([^=]*\).*/\1/'\`; do
+for i in \`env | sed 's/^\([^=]*\).*/\1/'\`; do
+    eval "i=\$i"
     case "\$i" in
     http_proxy|https_proxy|ftp_proxy|all_proxy|no_proxy) : ;;
     HTTP_PROXY|HTTPS_PROXY|FTP_PROXY|ALL_PROXY|NO_PROXY) : ;;
@@ -210,7 +211,8 @@ for i in $ZS_S_BINDINGS; do
     *)  [ -f "\$i" ] && is_reg_weak "\$rootfs/\$i" && bindings="\$bindings -b \$i"
     esac
 done
-for i in \`env -0 | tr -d '\n' | tr '\0' '\n' | sed 's/^\([^=]*\).*/\1/'\`; do
+for i in \`env | sed 's/^\([^=]*\).*/\1/'\`; do
+    eval "i=\$i"
     case "\$i" in
     http_proxy|https_proxy|ftp_proxy|all_proxy|no_proxy) : ;;
     HTTP_PROXY|HTTPS_PROXY|FTP_PROXY|ALL_PROXY|NO_PROXY) : ;;
