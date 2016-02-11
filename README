@@ -23,6 +23,12 @@ The list of available distributions is currently:
 This tool is still a prototype and as of now configuration is passed through
 the environment, refer to the TODO file for next steps.
 
+Note that this tool requires a kernel >= 3.x in order to execute unprivileged
+containers.
+In particular if you have this kind of error:
+`ERROR: unshare failed with error Invalid argument`. The host distribution
+kernel is probably too old.
+
 # Download
 
 Download a specific release from the release page:
