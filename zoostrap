@@ -227,10 +227,12 @@ for i in \`env | sed 's/^\([^=]*\).*/\1/'\`; do
     *) unset "\$i" ;;
     esac
 done
-HOME=/nonexistent
+HOME=/home/guest
 export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
+mkdir -p "\$rootfs\$HOME"
+chmod 700 "\$rootfs\$HOME"
 exec "\$dir"/ckains -r "\$rootfs" -w / \\
      $ZS_CKAINS_OPTS \\
      \$bindings \\
@@ -260,7 +262,7 @@ for i in \`env | sed 's/^\([^=]*\).*/\1/'\`; do
     *) unset "\$i" ;;
     esac
 done
-HOME=/nonexistent
+HOME=/root
 export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
