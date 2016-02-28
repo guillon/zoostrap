@@ -20,11 +20,11 @@
 set -eu
 set -o pipefail
 
-basename=$(basename "$0")
-dirname=$(readlink -e "$(dirname "$0")")
+basename="$(basename "$0")"
 
 ZS_DISTRIB_ID="${ZS_DISTRIB_ID:-ubuntu}"
 ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
+ZS_DISTRIB_ARCH="${ZS_DISTRIB_ARCH:-$(uname -m)}"
 ZS_DISTRIB_PACKAGES="${ZS_DISTRIB_PACKAGES:-}"
 ZS_UPDATE="${ZS_UPDATE:-true}"
 ZS_UPGRADE="${ZS_UPGRADE:-false}"
@@ -45,57 +45,95 @@ function info() { echo "$basename: info: $1"; }
 function cleanup() { local code=$?; trap - INT TERM QUIT EXIT; [ ! -d "${tmpdir:-}" ] || rm -rf "$tmpdir"; exit $code; }
 trap cleanup INT TERM QUIT EXIT
 
+ZS_CKAINS_OPTS=""
+ZS_PROOT_OPTS=""
+case "$ZS_DISTRIB_ARCH" in
+  x86|i[3456]86) \
+    ZS_DISTRIB_ARCH=x86
+    ZS_CKAINS_OPTS="${ZS_CKAINS_OPTS:+ }--32"
+    ;;
+  amd64|x86_64) \
+    ZS_DISTRIB_ARCH=x86_64
+    ;;
+esac
+
 ZS_DISTRIB_URL=""
-case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
-  ubuntu-12.04) \
+ZS_DISTRIB_SHA1SUM=""
+ZS_DISTRIB_PREPARE=""
+case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
+  ubuntu-12.04-x86_64) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-amd64.tar.gz"
     ZS_DISTRIB_SHA1SUM="10e690309ebeb2ab06d8faf40b0c08c0723c7639"
     ;;
-  ubuntu-14.04) \
-    ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.2-core-amd64.tar.gz"
-    ZS_DISTRIB_SHA1SUM="0993465651afdf4e2ea18af6d0b3233080f8d6f2"
+  ubuntu-12.04-x86) \
+    ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-i386.tar.gz"
+    ZS_DISTRIB_SHA1SUM="003f32a4bc1e1a78c1f284f5cbeefbc19e4ca638"
     ;;
-  centos-5) \
+  ubuntu-14.04-x86_64) \
+    ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.4-core-amd64.tar.gz"
+    ZS_DISTRIB_SHA1SUM="a7a122e432851f2ae37d9b878e75713649d53bb2"
+    ;;
+  ubuntu-14.04-x86) \
+    ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.4-core-i386.tar.gz"
+    ZS_DISTRIB_SHA1SUM="f46c85bee7ed3ca47873d587f51801eab4748327"
+    ;;
+  centos-5-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"
     ;;
-  centos-6) \
+  centos-5-x86) \
+    ZS_DISTRIB_URL="https://download.openvz.org/template/precreated/centos-5-x86.tar.gz"
+    ZS_DISTRIB_SHA1SUM="" # openvz distros URL are updated, don't check
+    ZS_DISTRIB_PREPARE="rm -f /etc/yum.repos.d/vz.repo" # Don't fecth from OpenVZ repos
+    ;;
+  centos-6-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/20732d1bb34a9aba45c1c6f41576ed6bf3d8c619/docker/centos-6-root.tar.xz"
     ZS_DISTRIB_SHA1SUM="d5a8ad4c4cff457aa0580cfb8c1cac1702b971cd"
     ;;
-  centos-7) \
+  centos-6-x86) \
+    ZS_DISTRIB_URL="https://download.openvz.org/template/precreated/centos-6-x86-minimal.tar.gz"
+    ZS_DISTRIB_SHA1SUM="" # openvz distros URL are updated, don't check
+    ZS_DISTRIB_PREPARE="rm -f /etc/yum.repos.d/vz.repo" # Don't fecth from OpenVZ repos
+    ;;
+  centos-7-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/e72a549845ecce5563d15e600f1e735a71095dcf/docker/c7-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="8a42a19464ae4e85f0ceda0876e65d90c36b3e67"
     ;;
-  fedora-20) \
+  fedora-20-x86_64) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/10ada29063147fde9e39190f4c2344b6e6e659e6/fedora-20-medium.tar.xz"
     ZS_DISTRIB_SHA1SUM="925fb62ffa06fca9d8175329a7a25d568a6d2569"
     ;;
-  fedora-21) \
+  fedora-20-x86) \
+    ZS_DISTRIB_URL="https://download.openvz.org/template/precreated/fedora-20-x86.tar.gz"
+    ZS_DISTRIB_SHA1SUM="" # openvz distros URL are updated, don't check
+    ZS_DISTRIB_PREPARE="rm -f /etc/yum.repos.d/vz.repo" # Don't fecth from OpenVZ repos
+    ;;
+  fedora-21-x86_64) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/e32493b9601c3535cd6e0d0a8ff61d8fa95afb83/fedora-21-release.tar.xz"
     ZS_DISTRIB_SHA1SUM="cebddbab94c873187e030a5aaab807db46f1edd7"
     ;;
-  fedora-22) \
+  fedora-22-x86_64) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/e5a0a567230ca8350d2be9b100604858fc898c0b/fedora-22-release.tar.xz"
     ZS_DISTRIB_SHA1SUM="e0bdc85ba132391a39cae293db351a97f2ddbbcf"
     ;;
-  fedora-23) \
+  fedora-23-x86_64) \
     ZS_DISTRIB_URL="https://github.com/fedora-cloud/docker-brew-fedora/raw/a079b0713dca2db8bce3a07c9a2caae0e276bebf/fedora-23-20160104.tar.xz"
     ZS_DISTRIB_SHA1SUM="b7b550f387a604904d1d7ab0a194a92cb1007a59"
     ;;
 esac
-case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
+
+case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
   ubuntu-*) \
     ZS_DISTRIB_UPDATE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list && apt-get update -qqy"
     ZS_DISTRIB_UPGRADE="apt-get upgrade -qqy"
     ZS_DISTRIB_INSTALL="apt-get install -qqy"
     ;;
   centos-*) \
-    ZS_DISTRIB_UPDATE="rm -f /etc/yum.repos.d/vz.repo && yum update -y"
+    ZS_DISTRIB_UPDATE="yum update -y"
     ZS_DISTRIB_UPGRADE="true"
     ZS_DISTRIB_INSTALL="yum install -y"
     ;;
-  fedora-20|fedora-21) \
+  fedora-20-*|fedora-21-*) \
     ZS_DISTRIB_UPDATE="yum update -y"
     ZS_DISTRIB_UPGRADE="true"
     ZS_DISTRIB_INSTALL="yum install -y"
@@ -107,7 +145,7 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}" in
     ;;
 esac
 
-[ -n "$ZS_DISTRIB_URL" ] || error "no default URL for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE"
+[ -n "$ZS_DISTRIB_URL" ] || error "no default URL for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE-$ZS_DISTRIB_ARCH"
 [ -n "$DST_DIR" ] || error "missing dst_dir argument"
 shift
 
@@ -140,7 +178,9 @@ echo "$ZS_PROOT_SHA1SUM  $tmpdir/proot" | sha1sum --check --status || error "inv
 distro_arch="$(basename "$ZS_DISTRIB_URL")"
 info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
 $ZS_WGET -O "$tmpdir/$distro_arch" "$ZS_DISTRIB_URL" 2>"$tmpdir"/wget.log || error "failed to download image from $ZS_DISTRIB_URL:  error code $?: error log: $(<"$tmpdir"/wget.log)"
-echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/$distro_arch" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
+if [ -n "$ZS_DISTRIB_SHA1SUM" ]; then
+    echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/$distro_arch" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
+fi
 
 info "Extracting $ZS_DISTRIB_URL in $DST_DIR..."
 case "$distro_arch" in
@@ -192,6 +232,7 @@ export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 exec "\$dir"/ckains -r "\$rootfs" -w / \\
+     $ZS_CKAINS_OPTS \\
      \$bindings \\
      \${1+"\$@"}
 EOF
@@ -224,23 +265,29 @@ export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 exec "\$dir"/proot -0 -r "\$rootfs" -w / \\
+     $ZS_PROOT_OPTS \\
      \$bindings \\
      \${1+"\$@"}
 EOF
 chmod +x "$DST_DIR"/.zoostrap/srun
 
+info "Preparing distro..."
+if [ -n "$ZS_DISTRIB_PREPARE" ]; then
+  "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_PREPARE"
+fi
+
 info "Updating distro..."
 if [ "$ZS_UPDATE" != false ]; then
   "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPDATE" || true
 else
-  info "Skipped (ZS_UPDATE=$ZS_UPDATE)."
+  info "Skipped (ZS_UPDATE='$ZS_UPDATE')."
 fi
 
 info "Upgrading distro..."
 if [ "$ZS_UPGRADE" != false ]; then
   "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPGRADE" || true
 else
-  info "Skipped (ZS_UPGRADE=$ZS_UPGRADE)."
+  info "Skipped (ZS_UPGRADE='$ZS_UPGRADE')."
 fi
 
 info "Installing packages..."
@@ -248,10 +295,10 @@ if [ -n "$ZS_DISTRIB_PACKAGES" ]; then
   info "Requested packages: $ZS_DISTRIB_PACKAGES..."
   "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || true
 else
-  info "Skipped, no package requested (ZS_DISTRIB_PACKAGES=$ZS_DISTRIB_PACKAGES)."
+  info "Skipped, no package requested (ZS_DISTRIB_PACKAGES='$ZS_DISTRIB_PACKAGES')."
 fi
 
 if [ "${1+1}" = 1 ]; then
-  info "Executing command: ${1+$@}"
-  "$DST_DIR"/.zoostrap/run ${1+"$@"}
+  info "Executing command: $*"
+  "$DST_DIR"/.zoostrap/run "$@"
 fi

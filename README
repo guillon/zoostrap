@@ -12,7 +12,7 @@ rootfs directory
 - execute installation of additional packages into this rootfs with `PRoot`
 - execute actual commands into this rootfs with `ckains`
 
-The list of available distributions is currently:
+The list of available x86_64 distributions is currently:
 - Ubuntu 12.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04`)
 - Ubuntu 14.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04`)
 - CentOS 5 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5`)
@@ -20,11 +20,19 @@ The list of available distributions is currently:
 - CentOS 7 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7`)
 - Fedora 20/21/22/23 (`ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=20/21/22/23`)
 
+Some x86 distributions are also available with the `ZS_DISTRIB_ARCH=i686`
+parameter:
+- Ubuntu 12.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04 ZS_DISTRIB_ARCH=i686`)
+- Ubuntu 14.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04 ZS_DISTRIB_ARCH=i686`)
+- CentOS 5 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5 ZS_DISTRIB_ARCH=i686`)
+- CentOS 6 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6 ZS_DISTRIB_ARCH=i686`)
+- Fedora 20 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=20 ZS_DISTRIB_ARCH=i686`)
+
 This tool is still a prototype and as of now configuration is passed through
 the environment, refer to the TODO file for next steps.
 
-Note that this tool requires a kernel >= 3.x in order to execute unprivileged
-containers.
+Note that this tool requires a kernel >= 3.10.x in order to execute
+unprivileged containers.
 In particular if you have this kind of error:
 `ERROR: unshare failed with error Invalid argument`. The host distribution
 kernel is probably too old.
@@ -75,16 +83,21 @@ to create which is passed as argument.
 
 The available parameters are:
 
-* `ZS_DISTRIB_ID="<distro>"`: one of the known distribution listed above
-* `ZS_DISTRIB_RELEASE="<release>"`: one of the known distro release listed above
+* `ZS_DISTRIB_ID="<distro>"`: one of the known distribution listed above.
+* `ZS_DISTRIB_RELEASE="<release>"`: one of the known distro release listed above.
+* `ZS_DISTRIB_ARCH="<uname-m>"`: the requested architecture for the
+  guest as may be provided by `uname -m` for instance. The default is the same
+  as the host architecture. It may be x86_64, amd64 (64 bits) or x86,
+  i[3456]86 (32 bits).
 * `ZS_DISTRIB_PACKAGES="<packages list>"`: space separated list of packages to
-  install, note that package names are specific to distributions, it is up to
-  the user to give actual packages name depending on the <distro> used
+  install, note that package names are specific to distributions. It is up to
+  the user to give actual packages names as expected by the requested
+  distribution.
 * `ZS_WGET="<wget command>"`: override default wget command and options.
   The default wget command is: `wget --no-check-certificate --tries 3`.
   Note that you may use `--no-check-certificate` without compromising
   security as all downloaded files are checked against there known
-  content hash (a sha1sum)
+  content hash (a sha1sum).
 
 # Build and Install
 

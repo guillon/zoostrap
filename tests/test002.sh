@@ -21,45 +21,33 @@
 
 source `dirname $0`/common.sh
 
-TEST_CASE="zoostrap and wget"
+TEST_CASE="zoostrap and wget on x86 guest distros"
 
 # Test kains installation
 $KAINS true
 
-# Test zoostrap distros
+# Test x86 distros, x86 ans i[3456]86 archs are equivalent for zoostrap
 env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04 \
     ZS_DISTRIB_PACKAGES="wget" \
+    ZS_DISTRIB_ARCH=x86 \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
 env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04 \
     ZS_DISTRIB_PACKAGES="wget" \
+    ZS_DISTRIB_ARCH=i686 \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
 env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5 \
     ZS_DISTRIB_PACKAGES="wget" \
+    ZS_DISTRIB_ARCH=i386 \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
 env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6 \
     ZS_DISTRIB_PACKAGES="wget" \
-    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
-
-env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7 \
-    ZS_DISTRIB_PACKAGES="wget" \
+    ZS_DISTRIB_ARCH=i486 \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
 env ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=20 \
     ZS_DISTRIB_PACKAGES="wget" \
+    ZS_DISTRIB_ARCH=i586 \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
-
-env ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=21 \
-    ZS_DISTRIB_PACKAGES="wget" \
-    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
-
-env ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=22 \
-    ZS_DISTRIB_PACKAGES="wget" \
-    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
-
-# Fails under travis-ci for an unknown reason
-#env ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=23 \
-#    ZS_DISTRIB_PACKAGES="wget" \
-#    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
