@@ -31,7 +31,10 @@ ZS_UPGRADE="${ZS_UPGRADE:-false}"
 ZS_R_BINDINGS="${ZS_R_BINDINGS:-/etc/host.conf /etc/hosts /etc/hosts.equiv /etc/mtab /etc/netgroup /etc/networks /etc/passwd /etc/group /etc/nsswitch.conf  /etc/resolv.conf /etc/localtime /dev/ /sys/ /proc/ /tmp/ /run/}"
 ZS_S_BINDINGS="${ZS_S_BINDINGS:-/etc/host.conf /etc/hosts /etc/nsswitch.conf  /etc/resolv.conf /dev/ /sys/ /proc/ /tmp/ /run/shm/}"
 
-ZS_WGET="${ZS_WGET:-wget --no-check-certificate --tries 3}"
+ZS_WGET="${ZS_WGET:-wget --no-check-certificate --timeout=30 --tries=2}"
+ZS_CACHE_DIR="${ZS_CACHE_DIR-${HOME:+$HOME/.zoostrap}}"
+ZS_DL_DIR="${ZS_CACHE_DIR:+$ZS_CACHE_DIR/downloads}"
+
 DST_DIR="${1:-}"
 
 ZS_CKAINS_URL="https://github.com/mickael-guene/ckains/releases/download/v1.1.0/ckains.x86_64"
@@ -42,8 +45,106 @@ ZS_PROOT_SHA1SUM="5e713559fd336074971590e8cbe7ab1593ffabfc"
 function error() { echo "$basename: error: $1" >&2; exit 1; }
 function warning() { echo "$basename: warning: $1" >&2; }
 function info() { echo "$basename: info: $1"; }
-function cleanup() { local code=$?; trap - INT TERM QUIT EXIT; [ ! -d "${tmpdir:-}" ] || rm -rf "$tmpdir"; exit $code; }
+
+declare -a tmp_files=()
+function add_temp() {
+    local tmp="${1?}"
+    tmp_files+=("$tmp")
+}
+function cleanup() {
+    local code=$?
+    local tmp
+    trap - INT TERM QUIT EXIT
+    if [ "${#tmp_files[@]}" != 0 ]; then
+        for tmp in "${tmp_files[@]}"; do
+            [ ! -e "$tmp" ] || chmod -R +rwX "$tmp" 2>/dev/null || true
+            [ ! -e "$tmp" ] || rm -rf "$tmp"
+        done
+    fi
+    exit $code
+}
 trap cleanup INT TERM QUIT EXIT
+
+function retry_when() {
+    local match="${1?}"
+    local log="${2?}"
+    local -a tries="(0 8 16 32 64 64)"
+    local delay
+    local tmplog
+    local res
+    local count
+
+    shift 2
+    tmplog="$(mktemp -p "$tmpdir")"
+    for delay in "${tries[@]}"; do
+        if [ "$delay" != 0 ]; then
+            info "will retry after $delay secs..."
+            sleep "$delay"
+        fi
+        res=0
+        if [ -n "$log" ]; then
+            "$@" 2>&1 | tee "$tmplog" >"$log" || res="$?"
+        else
+            "$@" 2>&1 | tee "$tmplog" || res="$?"
+        fi
+        count="$(grep -i -c -- "$match" "$tmplog" || true)"
+        [ "$count" != 0 ] || break
+    done
+    return "$res"
+}
+
+function download() {
+    local dl_url="${1?}"
+    local dl_name="${2?}"
+    local output="${3?}"
+    local dl_sha1sum="${4:-}"
+    local dl_dir="${5:-}"
+    local bname
+    local cache_entry
+    local tmpfile
+    local tmplog
+    local res
+
+    info "Downloading $dl_name from $dl_url..."
+    mkdir -p "$(dirname "$output")"
+    if [ -n "$dl_sha1sum" ] && [ -n "$dl_dir" ]; then
+        cache_entry="${dl_sha1sum::2}/${dl_sha1sum:2}"
+        if [ -f "$dl_dir/$cache_entry/$dl_name" ]; then
+            info "Get $dl_name from cache entry $dl_dir/$cache_entry/$dl_name"
+            cp -Ta "$dl_dir/$cache_entry/$dl_name" "$output"
+            return 0
+        fi
+        mkdir -p "$dl_dir"
+        chmod 700 "$dl_dir"
+        mkdir -p "$dl_dir/$cache_entry"
+        tmpfile="$(mktemp -p "$dl_dir/$cache_entry")"
+        add_temp "$tmpfile"
+        tmplog="$(mktemp -p "$dl_dir/$cache_entry")"
+        add_temp "$tmplog"
+    else
+        tmpfile="$(mktemp -p "$(dirname "$output")")"
+        add_temp "$tmpfile"
+        tmplog="$(mktemp -p "$(dirname "$output")")"
+        add_temp "$tmplog"
+    fi
+
+    res=0
+    retry_when "error 50[01234]" "$tmplog" $ZS_WGET -O "$tmpfile" "$dl_url" || res="$?"
+    [ "$res" = 0 ] || error "could not download $dl_name from $dl_url: error code: $res: error log: $(<"$tmplog")"
+
+    if [ -n "$dl_sha1sum" ]; then
+        echo "$dl_sha1sum  $tmpfile" | sha1sum -c --quiet --status || \
+            error "unexpected sha1sum for $dl_name at $dl_url, expected: $dl_sha1sum"
+    fi
+
+    if [ -n "$dl_sha1sum" ] && [ -n "$dl_dir" ]; then
+        info "Store $dl_name to cache entry $dl_dir/$cache_entry/$dl_name"
+        mv -f "$tmpfile" "$dl_dir/$cache_entry/$dl_name"
+        cp -Ta "$dl_dir/$cache_entry/$dl_name" "$output"
+    else
+        mv -T "$tmpfile" "$output"
+    fi
+}
 
 ZS_CKAINS_OPTS=""
 ZS_PROOT_OPTS=""
@@ -64,18 +165,22 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
   ubuntu-12.04-x86_64) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-amd64.tar.gz"
     ZS_DISTRIB_SHA1SUM="10e690309ebeb2ab06d8faf40b0c08c0723c7639"
+    ZS_DISTRIB_PREPARE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list"
     ;;
   ubuntu-12.04-x86) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/12.04/release/ubuntu-core-12.04.5-core-i386.tar.gz"
     ZS_DISTRIB_SHA1SUM="003f32a4bc1e1a78c1f284f5cbeefbc19e4ca638"
+    ZS_DISTRIB_PREPARE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list"
     ;;
   ubuntu-14.04-x86_64) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.4-core-amd64.tar.gz"
     ZS_DISTRIB_SHA1SUM="a7a122e432851f2ae37d9b878e75713649d53bb2"
+    ZS_DISTRIB_PREPARE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list"
     ;;
   ubuntu-14.04-x86) \
     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-core/releases/14.04/release/ubuntu-core-14.04.4-core-i386.tar.gz"
     ZS_DISTRIB_SHA1SUM="f46c85bee7ed3ca47873d587f51801eab4748327"
+    ZS_DISTRIB_PREPARE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list"
     ;;
   centos-5-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
@@ -124,9 +229,9 @@ esac
 
 case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
   ubuntu-*) \
-    ZS_DISTRIB_UPDATE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list && apt-get update -qqy"
-    ZS_DISTRIB_UPGRADE="apt-get upgrade -qqy"
-    ZS_DISTRIB_INSTALL="apt-get install -qqy"
+    ZS_DISTRIB_UPDATE="env DEBIAN_FRONTEND=noninteractive apt-get update -qqy"
+    ZS_DISTRIB_UPGRADE="env DEBIAN_FRONTEND=noninteractive apt-get upgrade -qqy"
+    ZS_DISTRIB_INSTALL="env DEBIAN_FRONTEND=noninteractive apt-get install -qqy"
     ;;
   centos-*) \
     ZS_DISTRIB_UPDATE="yum update -y"
@@ -166,21 +271,14 @@ chmod -R +rwX "$dst_dir_dirname"/trash.zoostrap.* 2>/dev/null || true
 rm -rf "$dst_dir_dirname"/trash.zoostrap.* || warning "could not remove completly trash dirs when running: rm -rf $dst_dir_dirname/trash.zoostrap.*"
 
 tmpdir="$(mktemp -d -p "$dst_dir_dirname" tmp.zoostrap.XXXXXX)"
+add_temp "$tmpdir"
 
-info "Downloading ckains from $ZS_CKAINS_URL..."
-$ZS_WGET -O "$tmpdir"/ckains "$ZS_CKAINS_URL" 2>"$tmpdir"/wget.log || error "failed to download ckains tool from $ZS_CKAINS_URL: error code $?: error log: $(<"$tmpdir"/wget.log)"
-echo "$ZS_CKAINS_SHA1SUM  $tmpdir/ckains" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_CKAINS_URL, expecting: $ZS_CKAINS_SHA1SUM"
+download "$ZS_CKAINS_URL" ckains "$tmpdir"/ckains "$ZS_CKAINS_SHA1SUM" "$ZS_DL_DIR"
 
-info "Downloading proot from $ZS_PROOT_URL..."
-$ZS_WGET -O "$tmpdir"/proot "$ZS_PROOT_URL" 2>"$tmpdir"/wget.log || error "failed to download ckains tool from $ZS_PROOT_URL:  error code $?: error log: $(<"$tmpdir"/wget.log)"
-echo "$ZS_PROOT_SHA1SUM  $tmpdir/proot" | sha1sum --check --status || error "invalid checksum (sha1sum) for $ZS_PROOT_URL, expecting: $ZS_PROOT_SHA1SUM"
+download "$ZS_PROOT_URL" proot "$tmpdir"/proot "$ZS_PROOT_SHA1SUM" "$ZS_DL_DIR"
 
 distro_arch="$(basename "$ZS_DISTRIB_URL")"
-info "Downloading image for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE from $ZS_DISTRIB_URL..."
-$ZS_WGET -O "$tmpdir/$distro_arch" "$ZS_DISTRIB_URL" 2>"$tmpdir"/wget.log || error "failed to download image from $ZS_DISTRIB_URL:  error code $?: error log: $(<"$tmpdir"/wget.log)"
-if [ -n "$ZS_DISTRIB_SHA1SUM" ]; then
-    echo "$ZS_DISTRIB_SHA1SUM  $tmpdir/$distro_arch" | sha1sum --check --status || warning "checksum (sha1sum) as changed for $ZS_DISTRIB_URL, expecting: $ZS_DISTRIB_SHA1SUM"
-fi
+download "$ZS_DISTRIB_URL" "$distro_arch" "$tmpdir/$distro_arch" "$ZS_DISTRIB_SHA1SUM" "$ZS_DL_DIR"
 
 info "Extracting $ZS_DISTRIB_URL in $DST_DIR..."
 case "$distro_arch" in
@@ -197,6 +295,7 @@ case "$distro_arch" in
         error "unsupported archive type for image: $ZS_DISTRIB_URL"
         ;;
 esac
+rm -f "$tmpdir/$distro_arch"
 chmod u+rwx "$DST_DIR"
 
 mkdir -p "$DST_DIR"/.zoostrap
@@ -280,14 +379,14 @@ fi
 
 info "Updating distro..."
 if [ "$ZS_UPDATE" != false ]; then
-  "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPDATE" || true
+  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPDATE" || true
 else
   info "Skipped (ZS_UPDATE='$ZS_UPDATE')."
 fi
 
 info "Upgrading distro..."
 if [ "$ZS_UPGRADE" != false ]; then
-  "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPGRADE" || true
+  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPGRADE" || true
 else
   info "Skipped (ZS_UPGRADE='$ZS_UPGRADE')."
 fi
@@ -295,7 +394,7 @@ fi
 info "Installing packages..."
 if [ -n "$ZS_DISTRIB_PACKAGES" ]; then
   info "Requested packages: $ZS_DISTRIB_PACKAGES..."
-  "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || true
+  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || true
 else
   info "Skipped, no package requested (ZS_DISTRIB_PACKAGES='$ZS_DISTRIB_PACKAGES')."
 fi
