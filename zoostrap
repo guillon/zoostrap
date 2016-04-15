@@ -39,8 +39,8 @@ DST_DIR="${1:-}"
 
 ZS_CKAINS_URL="https://github.com/mickael-guene/ckains/releases/download/v1.1.0/ckains.x86_64"
 ZS_CKAINS_SHA1SUM="90c454a4cef40f237eed8c2b2f63264a2079fa5e"
-ZS_PROOT_URL="https://github.com/proot-me/proot-static-build/raw/master/static/proot-x86_64"
-ZS_PROOT_SHA1SUM="5e713559fd336074971590e8cbe7ab1593ffabfc"
+ZS_PROOT_URL="https://github.com/guillon/PRoot/releases/download/v5.1.0-guillon-1/proot-x86_64"
+ZS_PROOT_SHA1SUM="f2247bf30d4c0b587a4b5c9b094ece2ce568f90e"
 
 function error() { echo "$basename: error: $1" >&2; exit 1; }
 function warning() { echo "$basename: warning: $1" >&2; }
@@ -365,7 +365,7 @@ HOME=/root
 export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
-exec "\$dir"/proot -0 -r "\$rootfs" -w / \\
+exec "\$dir"/proot --kill-on-exit -0 -r "\$rootfs" -w / \\
      $ZS_PROOT_OPTS \\
      \$bindings \\
      \${1+"\$@"}
