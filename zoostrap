@@ -20,20 +20,32 @@
 set -eu
 set -o pipefail
 
+dirname="$(dirname "$(readlink -e "$0")")"
 basename="$(basename "$0")"
+
+# Change whenever generated rootfs may have different content
+# with same zoostrap command args.
+# Used to differentiate cached rootfs when ZS_BCACHE == true.
+ZS_ID="1.2"
 
 ZS_DISTRIB_ID="${ZS_DISTRIB_ID:-ubuntu}"
 ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
 ZS_DISTRIB_ARCH="${ZS_DISTRIB_ARCH:-$(uname -m)}"
 ZS_DISTRIB_PACKAGES="${ZS_DISTRIB_PACKAGES:-}"
+ZS_PACKAGES_STRICT="${ZS_PACKAGES_STRICT:-true}"
 ZS_UPDATE="${ZS_UPDATE:-true}"
+ZS_UPDATE_STRICT="${ZS_UPDATE_STRICT:-true}"
 ZS_UPGRADE="${ZS_UPGRADE:-false}"
+ZS_UPGRADE_STRICT="${ZS_UPGRADE_STRICT:-true}"
 ZS_R_BINDINGS="${ZS_R_BINDINGS:-/etc/host.conf /etc/hosts /etc/hosts.equiv /etc/mtab /etc/netgroup /etc/networks /etc/passwd /etc/group /etc/nsswitch.conf  /etc/resolv.conf /etc/localtime /dev/ /sys/ /proc/ /tmp/ /run/}"
 ZS_S_BINDINGS="${ZS_S_BINDINGS:-/etc/host.conf /etc/hosts /etc/nsswitch.conf  /etc/resolv.conf /dev/ /sys/ /proc/ /tmp/ /run/shm/}"
 
 ZS_WGET="${ZS_WGET:-wget --no-check-certificate --timeout=30 --tries=2}"
 ZS_CACHE_DIR="${ZS_CACHE_DIR-${HOME:+$HOME/.zoostrap}}"
 ZS_DL_DIR="${ZS_CACHE_DIR:+$ZS_CACHE_DIR/downloads}"
+ZS_BCACHE="${ZS_BCACHE:-false}"
+ZS_BCACHE_DIR="${ZS_BCACHE_DIR-${HOME:+$HOME/.bcache}}"
+ZS_BCACHE_ID="${ZS_BCACHE_ID-}"
 
 DST_DIR="${1:-}"
 
@@ -41,6 +53,8 @@ ZS_CKAINS_URL="https://github.com/mickael-guene/ckains/releases/download/v1.1.0/
 ZS_CKAINS_SHA1SUM="90c454a4cef40f237eed8c2b2f63264a2079fa5e"
 ZS_PROOT_URL="https://github.com/guillon/PRoot/releases/download/v5.1.0-guillon-1/proot-x86_64"
 ZS_PROOT_SHA1SUM="f2247bf30d4c0b587a4b5c9b094ece2ce568f90e"
+ZS_BCACHE_URL="https://github.com/guillon/bcache/releases/download/v0.4.0/bcache"
+ZS_BCACHE_SHA1SUM="c6107fe4bc99e999d709b179b1f6e05e418d1101"
 
 function error() { echo "$basename: error: $1" >&2; exit 1; }
 function warning() { echo "$basename: warning: $1" >&2; }
@@ -115,6 +129,7 @@ function download() {
             return 0
         fi
         mkdir -p "$dl_dir"
+        dl_dir="$(readlink -e "$dl_dir")"
         chmod 700 "$dl_dir"
         mkdir -p "$dl_dir/$cache_entry"
         tmpfile="$(mktemp -p "$dl_dir/$cache_entry")"
@@ -139,10 +154,10 @@ function download() {
 
     if [ -n "$dl_sha1sum" ] && [ -n "$dl_dir" ]; then
         info "Store $dl_name to cache entry $dl_dir/$cache_entry/$dl_name"
-        mv -f "$tmpfile" "$dl_dir/$cache_entry/$dl_name"
+        mv -Tf "$tmpfile" "$dl_dir/$cache_entry/$dl_name"
         cp -Ta "$dl_dir/$cache_entry/$dl_name" "$output"
     else
-        mv -T "$tmpfile" "$output"
+        mv -Tf "$tmpfile" "$output"
     fi
 }
 
@@ -266,8 +281,8 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
     ;;
 esac
 
-[ -n "$ZS_DISTRIB_URL" ] || error "no default URL for $ZS_DISTRIB_ID-$ZS_DISTRIB_RELEASE-$ZS_DISTRIB_ARCH"
-[ -n "$DST_DIR" ] || error "missing dst_dir argument"
+[ -n "$ZS_DISTRIB_URL" ] || error "wrong arguments: no distribution available for triplet (ZS_DISTRIB_ID,ZS_DISTRIB_RELEASE,ZS_DISTRIB_ARCH): ($ZS_DISTRIB_ID,$ZS_DISTRIB_RELEASE,$ZS_DISTRIB_ARCH)"
+[ -n "$DST_DIR" ] || error "missing argument: the rootfs directory to create must be specified as first argument"
 shift
 
 if [ -d "$DST_DIR" ]; then
@@ -275,12 +290,13 @@ if [ -d "$DST_DIR" ]; then
     dst_dir_dirname="$(dirname "$(readlink -e "$DST_DIR")")"
     trash_tmpdir="$(mktemp -d -p "$dst_dir_dirname" trash.zoostrap.XXXXXX)"
     chmod u+rwx "$DST_DIR"
-    mv "$DST_DIR" "$trash_tmpdir"
+    mv "$DST_DIR" "$trash_tmpdir"/
 fi
 
 info "Creating $DST_DIR..."
 mkdir -p "$DST_DIR"
 dst_dir_dirname="$(dirname "$(readlink -e "$DST_DIR")")"
+dst_dir_basename="$(basename "$DST_DIR")"
 
 info "Cleaning trash dirs..."
 chmod -R +rwX "$dst_dir_dirname"/trash.zoostrap.* 2>/dev/null || true
@@ -288,6 +304,39 @@ rm -rf "$dst_dir_dirname"/trash.zoostrap.* || warning "could not remove completl
 
 tmpdir="$(mktemp -d -p "$dst_dir_dirname" tmp.zoostrap.XXXXXX)"
 add_temp "$tmpdir"
+
+if [ "$ZS_BCACHE" = true ] && [ -n "$ZS_BCACHE_DIR" ] && [ "$ZS_UPGRADE" = false ]; then
+    download "$ZS_BCACHE_URL" bcache "$tmpdir"/bcache "$ZS_BCACHE_SHA1SUM" "$ZS_DL_DIR"
+    chmod +x "$tmpdir"/bcache
+    cp -Ta "$dirname/$basename" "$tmpdir"/zoostrap
+    pushd "$tmpdir" >/dev/null
+    ./bcache -d -c "$ZS_BCACHE_DIR" -o rootfs \
+        --env ZS_DISTRIB_ID="$ZS_DISTRIB_ID" \
+        --env ZS_DISTRIB_RELEASE="$ZS_DISTRIB_RELEASE" \
+        --env ZS_DISTRIB_ARCH="$ZS_DISTRIB_ARCH" \
+        --env ZS_DISTRIB_PACKAGES="$ZS_DISTRIB_PACKAGES" \
+        --env ZS_UPDATE="$ZS_UPDATE" \
+        --env ZS_UPGRADE="$ZS_UPGRADE" \
+        --env ZS_R_BINDINGS="$ZS_R_BINDINGS" \
+        --env ZS_S_BINDINGS="$ZS_S_BINDINGS" \
+        --venv ZS_WGET \
+        --env ZS_CACHE_DIR="" \
+        --env ZS_BCACHE="false" \
+        --env ZS_BCACHE_DIR="" \
+        --env ZS_PACKAGES_STRICT="true" \
+        --env ZS_UPDATE_STRICT="true" \
+        --env ZS_UPGRADE_STRICT="true" \
+        --id ZS_ID="$ZS_ID" \
+        ${ZS_BCACHE_ID:+--id "ZS_USER_ID=$ZS_BCACHE_ID"} \
+        ./zoostrap rootfs
+    popd >/dev/null
+    mv -Tf "$tmpdir"/rootfs "$DST_DIR"
+    if [ "${1+1}" = 1 ]; then
+        info "Executing command: $*"
+        "$DST_DIR"/.zoostrap/run "$@"
+    fi
+    exit 0
+fi
 
 download "$ZS_CKAINS_URL" ckains "$tmpdir"/ckains "$ZS_CKAINS_SHA1SUM" "$ZS_DL_DIR"
 
@@ -315,9 +364,9 @@ rm -f "$tmpdir/$distro_arch"
 chmod u+rwx "$DST_DIR"
 
 mkdir -p "$DST_DIR"/.zoostrap
-mv "$tmpdir"/ckains "$DST_DIR"/.zoostrap/ckains
+mv -Tf "$tmpdir"/ckains "$DST_DIR"/.zoostrap/ckains
 chmod +x "$DST_DIR"/.zoostrap/ckains
-mv "$tmpdir"/proot "$DST_DIR"/.zoostrap/proot
+mv -Tf "$tmpdir"/proot "$DST_DIR"/.zoostrap/proot
 chmod +x "$DST_DIR"/.zoostrap/proot
 
 cat >"$DST_DIR"/.zoostrap/run <<EOF
@@ -395,14 +444,18 @@ fi
 
 info "Updating distro..."
 if [ "$ZS_UPDATE" != false ]; then
-  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPDATE" || true
+  res=0
+  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPDATE" || res="$?"
+  [ "$ZS_UPDATE_STRICT" = false -o "$res" = 0 ] || exit "$res"
 else
   info "Skipped (ZS_UPDATE='$ZS_UPDATE')."
 fi
 
 info "Upgrading distro..."
 if [ "$ZS_UPGRADE" != false ]; then
-  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPGRADE" || true
+  res=0
+  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_UPGRADE" || res="$?"
+  [ "$ZS_UPGRADE_STRICT" = false -o "$res" = 0  ] || exit "$res"
 else
   info "Skipped (ZS_UPGRADE='$ZS_UPGRADE')."
 fi
@@ -410,7 +463,9 @@ fi
 info "Installing packages..."
 if [ -n "$ZS_DISTRIB_PACKAGES" ]; then
   info "Requested packages: $ZS_DISTRIB_PACKAGES..."
-  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || true
+  res=0
+  retry_when "\(error.* 50[01234]\|failed to fetch\)" "" "$DST_DIR"/.zoostrap/srun sh -c "$ZS_DISTRIB_INSTALL $ZS_DISTRIB_PACKAGES" || res="$?"
+  [ "$ZS_PACKAGES_STRICT" = false -o "$res" = 0  ] || exit "$res"
 else
   info "Skipped, no package requested (ZS_DISTRIB_PACKAGES='$ZS_DISTRIB_PACKAGES')."
 fi
