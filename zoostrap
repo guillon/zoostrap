@@ -26,7 +26,7 @@ basename="$(basename "$0")"
 # Change whenever generated rootfs may have different content
 # with same zoostrap command args.
 # Used to differentiate cached rootfs when ZS_BCACHE == true.
-ZS_ID="1.2"
+ZS_ID="1.3"
 
 ZS_DISTRIB_ID="${ZS_DISTRIB_ID:-ubuntu}"
 ZS_DISTRIB_RELEASE="${ZS_DISTRIB_RELEASE:-12.04}"
@@ -51,8 +51,8 @@ DST_DIR="${1:-}"
 
 ZS_CKAINS_URL="https://github.com/mickael-guene/ckains/releases/download/v1.1.0/ckains.x86_64"
 ZS_CKAINS_SHA1SUM="90c454a4cef40f237eed8c2b2f63264a2079fa5e"
-ZS_PROOT_URL="https://github.com/guillon/PRoot/releases/download/v5.1.0-guillon-1/proot-x86_64"
-ZS_PROOT_SHA1SUM="f2247bf30d4c0b587a4b5c9b094ece2ce568f90e"
+ZS_PROOT_URL="https://github.com/guillon/PRoot/releases/download/v5.1.0-guillon-2/proot-x86_64"
+ZS_PROOT_SHA1SUM="5d992411e24e0589bcf8a53b4843bfb0f76ee3ed"
 ZS_BCACHE_URL="https://github.com/guillon/bcache/releases/download/v0.4.0/bcache"
 ZS_BCACHE_SHA1SUM="c6107fe4bc99e999d709b179b1f6e05e418d1101"
 
