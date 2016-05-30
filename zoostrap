@@ -323,9 +323,9 @@ if [ "$ZS_BCACHE" = true ] && [ -n "$ZS_BCACHE_DIR" ] && [ "$ZS_UPGRADE" = false
         --env ZS_CACHE_DIR="" \
         --env ZS_BCACHE="false" \
         --env ZS_BCACHE_DIR="" \
-        --env ZS_PACKAGES_STRICT="true" \
-        --env ZS_UPDATE_STRICT="true" \
-        --env ZS_UPGRADE_STRICT="true" \
+        --env ZS_PACKAGES_STRICT="$ZS_PACKAGES_STRICT" \
+        --env ZS_UPDATE_STRICT="$ZS_UPDATE_STRICT" \
+        --env ZS_UPGRADE_STRICT="$ZS_UPGRADE_STRICT" \
         --id ZS_ID="$ZS_ID" \
         ${ZS_BCACHE_ID:+--id "ZS_USER_ID=$ZS_BCACHE_ID"} \
         ./zoostrap rootfs
