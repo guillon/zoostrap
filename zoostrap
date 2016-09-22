@@ -213,6 +213,11 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
 #    ZS_DISTRIB_SHA1SUM="f46c85bee7ed3ca47873d587f51801eab4748327"
 #    ZS_DISTRIB_PREPARE="sed -i 's/# \(deb .*universe\)/\1/' /etc/apt/sources.list"
     ;;
+  ubuntu-16.04-x86_64) \
+     ZS_DISTRIB_URL="https://download.openvz.org/template/precreated/ubuntu-16.04-x86_64.tar.gz"
+     ZS_DISTRIB_SHA1SUM="" # openvz distros URL are updated, don't check
+     ZS_DISTRIB_PREPARE=""
+     ;;
   centos-5-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"

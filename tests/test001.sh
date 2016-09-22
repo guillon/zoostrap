@@ -35,6 +35,10 @@ env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04 \
     ZS_DISTRIB_PACKAGES="wget" \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
+env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=16.04 \
+    ZS_DISTRIB_PACKAGES="wget" \
+    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
+
 env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5 \
     ZS_DISTRIB_PACKAGES="wget" \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
