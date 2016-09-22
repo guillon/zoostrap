@@ -31,11 +31,19 @@ parameter:
 This tool is still a prototype and as of now configuration is passed through
 the environment, refer to the TODO file for next steps.
 
-Note that this tool requires a kernel >= 3.10.x in order to execute
+Note that this tool requires a kernel >= 3.11.x in order to execute
 unprivileged containers.
 In particular if you have this kind of error:
 `ERROR: unshare failed with error Invalid argument`. The host distribution
 kernel is probably too old.
+
+The tool uses 3 companions tools as backend:
+- PRoot for installation of packages,
+- ckains for execution of the container,
+- bcache for cacheing of images.
+
+See references section.
+
 
 # Download
 
@@ -98,6 +106,43 @@ The available parameters are:
   Note that you may use `--no-check-certificate` without compromising
   security as all downloaded files are checked against there known
   content hash (a sha1sum).
+* `ZS_BCACHE=false|true`: activates caching of installed images, defaults to
+  `false`. If `true` Images are cached after after  download and packages
+  installation. The cached installed images are
+  used on further zoostrap installations if the image identifiers and installed
+  packages are the same. Cached images are stored into a local `ZS_BCACHE_DIR`.
+  The `ZS_BCACHE_ID` variable can be used to discriminate images optionally,
+  and have a guarantee that an image is stable (the actual base distro
+  archives may indeed vary over time), though this is not used generally.
+  Thus the actual identification of a unique cache entry is done at least with
+  the tuple (ZS_DISTRIB_ID, ZS_DISTRIB_RELEASE, ZS_DISTRIB_ARCH,
+  ZS_BCACHE_ID). This option uses the `bcache` tool.
+* `ZS_BCACHE_DIR=<cache_dir>`: set location of cache when `ZS_BCACHE=true`,
+  defaults to `$HOME/.bcache`. Note that this location holds installed images
+  which may require some amout of disk space (generally 500Mb par installed
+  images with a reasonable number of user packegs). There is no management
+  of space provided by the tool, this location can be cleaned manually.
+  Note that the startup is much faster if this location is on the same
+  partition than the instelled root FSs.
+* `ZS_BCACHE_ID=<any_stiing>`: optional discriminent for cached images. Ref to
+  `ZS_BCACHE` notes.
+* `ZS_UPDATE=true|false`: run packages list update before installing packages,
+   defaults to ` true`. This should normally always be active as base distros
+   images do not have latest packages versions list.
+* `ZS_UPGRADE=false|true`: run packages upgrade before installing packages,
+   defaults to `false`. This has an effect only for Ubuntu images and runs
+   an `apt-get upgrade` if `true`. This is normally not required, provided
+   just as an option. Note that if this is `true`, caching through `ZS_BCACHE`
+   is deactivated.
+* `ZS_PACKAGES_STRICT/ZS_UPDATE_STRICT/ZS_UPGRADE_STRICT=true|false`: these
+  three variables control the error management on respectively packages
+  installation, packages update, packages upgrade. There are cases where
+  packages installation fail due to limitation of the non-privileged PRoot
+  backend. For instace some packages installation may try to restart damons or
+  create device nodes, which is not supported. If actually the installation is
+  correct even when such errors are reported, one may use
+  `ZS_PACKAGES_STRICT=false` to work-around the problem.
+
 
 # Build and Install
 
@@ -124,7 +169,7 @@ Install with, for instance:
 # References
 
 Refer to the project home page at:
-http://guillon.github.io/zoostrap
+http://guillon.github.com/zoostrap
 
 Refer to the current build and validation status at:
 https://travis-ci.org/guillon/zoostrap?branches
@@ -138,6 +183,8 @@ https://github.com/guillon/zoostrap/blob/master/TODO
 Refer to ckains at: https://github.com/mickael-guene/ckains
 
 Refer to PRoot at: http://proot.me
+
+Refer to bcache at: https://guillon.github.com/bcache/
 
 # License
 
