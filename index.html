@@ -43,6 +43,7 @@ rootfs directory</li>
 <ul>
 <li>Ubuntu 12.04 (<code>ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=12.04</code>)</li>
 <li>Ubuntu 14.04 (<code>ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04</code>)</li>
+<li>Ubuntu 16.04 (<code>ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=16.04</code>)</li>
 <li>CentOS 5 (<code>ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5</code>)</li>
 <li>CentOS 6 (<code>ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6</code>)</li>
 <li>CentOS 7 (<code>ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7</code>)</li>
@@ -63,11 +64,21 @@ parameter:</p>
 <p>This tool is still a prototype and as of now configuration is passed through
 the environment, refer to the TODO file for next steps.</p>
 
-<p>Note that this tool requires a kernel &gt;= 3.10.x in order to execute
+<p>Note that this tool requires a kernel &gt;= 3.11.x in order to execute
 unprivileged containers.
 In particular if you have this kind of error:
 <code>ERROR: unshare failed with error Invalid argument</code>. The host distribution
 kernel is probably too old.</p>
+
+<p>The tool uses 3 companions tools as backend:</p>
+
+<ul>
+<li>PRoot for installation of packages,</li>
+<li>ckains for execution of the container,</li>
+<li>bcache for cacheing of images.</li>
+</ul>
+
+<p>See references section.</p>
 
 <h1>
 <a id="download" class="anchor" href="#download" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Download</h1>
@@ -143,6 +154,48 @@ The default wget command is: <code>wget --no-check-certificate --tries 3</code>.
 Note that you may use <code>--no-check-certificate</code> without compromising
 security as all downloaded files are checked against there known
 content hash (a sha1sum).</li>
+<li>
+<code>ZS_BCACHE=false|true</code>: activates caching of installed images, defaults to
+<code>false</code>. If <code>true</code> Images are cached after after  download and packages
+installation. The cached installed images are
+used on further zoostrap installations if the image identifiers and installed
+packages are the same. Cached images are stored into a local <code>ZS_BCACHE_DIR</code>.
+The <code>ZS_BCACHE_ID</code> variable can be used to discriminate images optionally,
+and have a guarantee that an image is stable (the actual base distro
+archives may indeed vary over time), though this is not used generally.
+Thus the actual identification of a unique cache entry is done at least with
+the tuple (ZS_DISTRIB_ID, ZS_DISTRIB_RELEASE, ZS_DISTRIB_ARCH,
+ZS_BCACHE_ID). This option uses the <code>bcache</code> tool.</li>
+<li>
+<code>ZS_BCACHE_DIR=&lt;cache_dir&gt;</code>: set location of cache when <code>ZS_BCACHE=true</code>,
+defaults to <code>$HOME/.bcache</code>. Note that this location holds installed images
+which may require some amout of disk space (generally 500Mb par installed
+images with a reasonable number of user packegs). There is no management
+of space provided by the tool, this location can be cleaned manually.
+Note that the startup is much faster if this location is on the same
+partition than the instelled root FSs.</li>
+<li>
+<code>ZS_BCACHE_ID=&lt;any_stiing&gt;</code>: optional discriminent for cached images. Ref to
+<code>ZS_BCACHE</code> notes.</li>
+<li>
+<code>ZS_UPDATE=true|false</code>: run packages list update before installing packages,
+defaults to <code>true</code>. This should normally always be active as base distros
+images do not have latest packages versions list.</li>
+<li>
+<code>ZS_UPGRADE=false|true</code>: run packages upgrade before installing packages,
+defaults to <code>false</code>. This has an effect only for Ubuntu images and runs
+an <code>apt-get upgrade</code> if <code>true</code>. This is normally not required, provided
+just as an option. Note that if this is <code>true</code>, caching through <code>ZS_BCACHE</code>
+is deactivated.</li>
+<li>
+<code>ZS_PACKAGES_STRICT/ZS_UPDATE_STRICT/ZS_UPGRADE_STRICT=true|false</code>: these
+three variables control the error management on respectively packages
+installation, packages update, packages upgrade. There are cases where
+packages installation fail due to limitation of the non-privileged PRoot
+backend. For instace some packages installation may try to restart damons or
+create device nodes, which is not supported. If actually the installation is
+correct even when such errors are reported, one may use
+<code>ZS_PACKAGES_STRICT=false</code> to work-around the problem.</li>
 </ul>
 
 <h1>
@@ -174,7 +227,7 @@ distribution for x86_64 architecture with a kernel &gt;= 3.0.</p>
 <a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>References</h1>
 
 <p>Refer to the project home page at:
-<a href="http://guillon.github.io/zoostrap">http://guillon.github.io/zoostrap</a></p>
+<a href="http://guillon.github.com/zoostrap">http://guillon.github.com/zoostrap</a></p>
 
 <p>Refer to the current build and validation status at:
 <a href="https://travis-ci.org/guillon/zoostrap?branches">https://travis-ci.org/guillon/zoostrap?branches</a></p>
@@ -188,6 +241,8 @@ distribution for x86_64 architecture with a kernel &gt;= 3.0.</p>
 <p>Refer to ckains at: <a href="https://github.com/mickael-guene/ckains">https://github.com/mickael-guene/ckains</a></p>
 
 <p>Refer to PRoot at: <a href="http://proot.me">http://proot.me</a></p>
+
+<p>Refer to bcache at: <a href="https://guillon.github.com/bcache/">https://guillon.github.com/bcache/</a></p>
 
 <h1>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h1>
