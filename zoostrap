@@ -218,6 +218,11 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
      ZS_DISTRIB_SHA1SUM="" # openvz distros URL are updated, don't check
      ZS_DISTRIB_PREPARE=""
      ;;
+  ubuntu-18.04-x86_64) \
+     ZS_DISTRIB_URL="https://github.com/tianon/docker-brew-ubuntu-core/raw/404d80486fada09bff68a210b7eddf78f3235156/bionic/ubuntu-bionic-core-cloudimg-amd64-root.tar.gz"
+     ZS_DISTRIB_SHA1SUM="a1654e9e4c752e2a69c9d3270a630d8c6bc4e8ce"
+     ZS_DISTRIB_PREPARE=""
+     ;;
   centos-5-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"
