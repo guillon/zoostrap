@@ -435,6 +435,8 @@ HOME=/root
 export HOME
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
+PROOT_NO_SECCOMP=1
+export PROOT_NO_SECCOMP
 exec "\$dir"/proot --kill-on-exit -0 -r "\$rootfs" -w / \\
      $ZS_PROOT_OPTS \\
      \$bindings \\
