@@ -37,17 +37,17 @@ env ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04 \
     ZS_DISTRIB_ARCH=i686 \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
-env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5 \
-    ZS_DISTRIB_PACKAGES="wget" \
-    ZS_DISTRIB_ARCH=i386 \
-    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
+#env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5 \
+#    ZS_DISTRIB_PACKAGES="wget" \
+#    ZS_DISTRIB_ARCH=i386 \
+#    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
 env ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6 \
     ZS_DISTRIB_PACKAGES="wget" \
     ZS_DISTRIB_ARCH=i486 \
     $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
 
-env ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=20 \
-    ZS_DISTRIB_PACKAGES="wget" \
-    ZS_DISTRIB_ARCH=i586 \
-    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
+#env ZS_DISTRIB_ID=fedora ZS_DISTRIB_RELEASE=20 \
+#    ZS_DISTRIB_PACKAGES="wget" \
+#    ZS_DISTRIB_ARCH=i586 \
+#    $ZOOSTRAP rootfs wget -O /dev/null http://www.google.com
