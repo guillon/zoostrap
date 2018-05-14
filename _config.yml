@@ -1,0 +1,8 @@
+title: Zoostrap
+description: Simple distro container bootstrap tool
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-cayman
+
+gems:
+  - jekyll-mentions
