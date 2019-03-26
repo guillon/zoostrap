@@ -243,6 +243,11 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
      ZS_DISTRIB_SHA1SUM="79c94960ba4c1b4084fcfcb5a07439e71d009f88"
      ZS_DISTRIB_PREPARE=""
      ;;
+  ubuntu-16.04.6-x86_64) \
+     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-base/releases/16.04/release/ubuntu-base-16.04.6-base-amd64.tar.gz"
+     ZS_DISTRIB_SHA1SUM="5b78fd00190a0efe4ebdd7dd72951847a553c440"
+     ZS_DISTRIB_PREPARE=""
+     ;;
   ubuntu-18.04-x86_64) \
      ZS_DISTRIB_URL="https://github.com/tianon/docker-brew-ubuntu-core/raw/404d80486fada09bff68a210b7eddf78f3235156/bionic/ubuntu-bionic-core-cloudimg-amd64-root.tar.gz"
      ZS_DISTRIB_SHA1SUM="a1654e9e4c752e2a69c9d3270a630d8c6bc4e8ce"
@@ -251,6 +256,11 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
   ubuntu-18.04.1-x86_64) \
      ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-base/releases/18.04/release/ubuntu-base-18.04.1-base-amd64.tar.gz"
      ZS_DISTRIB_SHA1SUM="b1e2148b8ce9aedd186445a68b07f186614db144"
+     ZS_DISTRIB_PREPARE=""
+     ;;
+  ubuntu-18.04.2-x86_64) \
+     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-base/releases/18.04/release/ubuntu-base-18.04.2-base-amd64.tar.gz"
+     ZS_DISTRIB_SHA1SUM="15f75d2f9030e41c4bec4f77ade661d8b7b7013b"
      ZS_DISTRIB_PREPARE=""
      ;;
   centos-5-x86_64) \
