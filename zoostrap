@@ -263,6 +263,11 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
      ZS_DISTRIB_SHA1SUM="15f75d2f9030e41c4bec4f77ade661d8b7b7013b"
      ZS_DISTRIB_PREPARE=""
      ;;
+  ubuntu-18.04.3-x86_64) \
+     ZS_DISTRIB_URL="http://cdimage.ubuntu.com/ubuntu-base/releases/18.04/release/ubuntu-base-18.04.3-base-amd64.tar.gz"
+     ZS_DISTRIB_SHA1SUM="77ff5005d18ae6ac8a385461cb51714ed9312df0"
+     ZS_DISTRIB_PREPARE=""
+     ;;
   centos-5-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"
