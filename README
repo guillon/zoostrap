@@ -17,6 +17,7 @@ The list of available x86_64 distributions is currently:
 - Ubuntu 14.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=14.04`)
 - Ubuntu 16.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=16.04`)
 - Ubuntu 18.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=18.04`)
+- Ubuntu 20.04 (`ZS_DISTRIB_ID=ubuntu ZS_DISTRIB_RELEASE=20.04`)
 - CentOS 5 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=5`)
 - CentOS 6 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=6`)
 - CentOS 7 (`ZS_DISTRIB_ID=centos ZS_DISTRIB_RELEASE=7`)
