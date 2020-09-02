@@ -6,3 +6,27 @@ deleted: device or resource busy after ckains completion)
 - optionally port to python 2.6/2.7/3.x
 - add options for packages lists and obsolete environment vars usage
 - add optional configuration file for list of packages and/or executedcommands
+- possibly recompile proot-static with a reproducible build, ref below
+
+
+PRoot compilation:
+Currently we rebuild a static proot within a PRooted centos6 in order to
+have the least subset of syscalls and larger portability.
+
+The recipe is:
+- first build proot on some host:
+  apt-get install gcc make libtalloc-devel
+  make clean; make all
+  cp proot /tmp/proot-step-1
+- then run proot proot-static-build on centos6
+  git clone https://github.com/proot-me/proot-static-build.git
+  cd proot-static-build
+  mkdir rootfs-centos6
+  cd rootfs-centos6
+  wget -O centos-6-root.tar.xz https://github.com/CentOS/sig-cloud-instance-images/raw/20732d1bb34a9aba45c1c6f41576ed6bf3d8c619/docker/centos-6-root.tar.xz
+  tar xvJf rootfs-centos6
+  cd ..
+  # prepare source archive, change version in src/cli/proot.h
+  # update GNUmakefile to point to packages/proot-<version>.tar.gz
+  proot -R centos-6-build make proot
+  cp proot proot-x86_64  # static version
