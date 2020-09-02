@@ -51,8 +51,8 @@ DST_DIR="${1:-}"
 
 ZS_CKAINS_URL="https://github.com/mickael-guene/ckains/releases/download/v1.1.0/ckains.x86_64"
 ZS_CKAINS_SHA1SUM="90c454a4cef40f237eed8c2b2f63264a2079fa5e"
-ZS_PROOT_URL="https://github.com/guillon/PRoot/releases/download/v5.1.0-guillon-2/proot-x86_64"
-ZS_PROOT_SHA1SUM="5d992411e24e0589bcf8a53b4843bfb0f76ee3ed"
+ZS_PROOT_URL="https://github.com/guillon/PRoot/releases/download/v5.1.0-guillon-4/proot-x86_64"
+ZS_PROOT_SHA1SUM="5ab3a927b5e5e2ce4ec9c868f85ff5e3ff9fb149"
 ZS_BCACHE_URL="https://github.com/guillon/bcache/releases/download/v0.4.0/bcache"
 ZS_BCACHE_SHA1SUM="c6107fe4bc99e999d709b179b1f6e05e418d1101"
 
