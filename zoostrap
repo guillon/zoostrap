@@ -355,9 +355,9 @@ esac
 
 case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
   ubuntu-*) \
-    ZS_DISTRIB_UPDATE="env DEBIAN_FRONTEND=noninteractive apt-get update -qqy"
-    ZS_DISTRIB_UPGRADE="env DEBIAN_FRONTEND=noninteractive apt-get upgrade -qqy"
-    ZS_DISTRIB_INSTALL="env DEBIAN_FRONTEND=noninteractive apt-get install -qqy"
+    ZS_DISTRIB_UPDATE="env DEBIAN_FRONTEND=noninteractive apt-get update -o APT::Sandbox::User=root -qqy"
+    ZS_DISTRIB_UPGRADE="env DEBIAN_FRONTEND=noninteractive apt-get upgrade -o APT::Sandbox::User=root -qqy"
+    ZS_DISTRIB_INSTALL="env DEBIAN_FRONTEND=noninteractive apt-get install -o APT::Sandbox::User=root -qqy"
     ;;
   centos-*) \
     ZS_DISTRIB_UPDATE="yum update -y"
