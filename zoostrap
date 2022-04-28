@@ -320,6 +320,18 @@ case "${ZS_DISTRIB_ID}-${ZS_DISTRIB_RELEASE}-${ZS_DISTRIB_ARCH}" in
      ZS_DISTRIB_SHA1SUM="b9e86ca0b02bb6932a21110d73d2a893820015e4"
      ZS_DISTRIB_PREPARE=""
      ;;
+  ubuntu-20.04.4-x86_64) \
+     # Upladed from http://cdimage.ubuntu.com/ubuntu-base/releases/20.04.4/release/ubuntu-base-20.04.4-base-amd64.tar.gz
+     ZS_DISTRIB_URL="https://github.com/guillon/zoostrap/releases/download/images/ubuntu-base-20.04.4-base-amd64.tar.gz"
+     ZS_DISTRIB_SHA1SUM="fbac9f51475010b91debcbd45d05f235d6cc2e41"
+     ZS_DISTRIB_PREPARE=""
+     ;;
+  ubuntu-22.04-x86_64) \
+     # Upladed from http://cdimage.ubuntu.com/ubuntu-base/releases/22.04/release/ubuntu-base-22.04-base-amd64.tar.gz
+     ZS_DISTRIB_URL="https://github.com/guillon/zoostrap/releases/download/images/ubuntu-base-22.04-base-amd64.tar.gz"
+     ZS_DISTRIB_SHA1SUM="0167f5fe30984e98681a2745f8e431705bc2e672"
+     ZS_DISTRIB_PREPARE=""
+     ;;
   centos-5-x86_64) \
     ZS_DISTRIB_URL="https://github.com/CentOS/sig-cloud-instance-images/raw/c8d1a81b0516bca0f20434be8d0fac4f7d58a04a/docker/centos-5-20150304_1234-docker.tar.xz"
     ZS_DISTRIB_SHA1SUM="9b255140c44f4378aec44a77708ccaede7a14474"
